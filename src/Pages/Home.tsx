@@ -1,3 +1,5 @@
+import { Weather } from "../Components/Weather";
+
 function Home(){
     return (
         <div className="NavPage">
@@ -7,6 +9,7 @@ function Home(){
             <button>
             Tasks
             </button>
+            <Weather/>
             <button>
             Settings
             </button>
