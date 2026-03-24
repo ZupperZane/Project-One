@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import { useState } from "react";
 import type { FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
@@ -76,3 +77,19 @@ function Login() {
 }
 
 export default Login;
+=======
+export function Login(){
+    return (
+ <div>
+    <h1>
+        Please Login 
+    </h1>
+    <div>
+        <button>
+            Login Button Here
+        </button>
+    </div>
+ </div>
+    )
+}
+>>>>>>> origin/weather
