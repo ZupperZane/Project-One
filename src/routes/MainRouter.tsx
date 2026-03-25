@@ -6,9 +6,9 @@ import { ROUTES } from "../utils/constants";
 import Home from "../Pages/Home";
 import Login from "../Pages/Login";
 import Dashboard from "../Pages/Dashboard";
-import Messages from "../Pages/Messages";
-import Tasks from "../Pages/Tasks";
 import ErrorPage from "../Pages/ErrorPage";
+import { Messages } from "../Pages/Messages";
+import { Tasks } from "../Pages/Tasks";
 
 // These pages don't exist yet — stubs will be added by their owners.
 // Uncomment each line as the page is created.
