@@ -1,11 +1,3 @@
-<<<<<<< HEAD
-export function Weather(){
-    return (
- <div>
-    Weather
- </div>
-    )
-=======
 
 import { useWeather } from "../hooks/useWeather";
 
@@ -76,5 +68,4 @@ export default function Weather() {
       </div>
     </section>
   );
->>>>>>> origin/weather
 }

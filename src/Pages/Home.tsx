@@ -1,15 +1,3 @@
-<<<<<<< HEAD
-function Home() {
-  return (
-    <section>
-      <h2>Home</h2>
-      <p>Do your work magic frontend boy.</p>
-    </section>
-  );
-}
-
-export default Home;
-=======
 
 import Weather from "../Components/Weather";
 
@@ -25,4 +13,3 @@ function Home() {
 }
 
 export default Home;    
->>>>>>> origin/weather

@@ -1,0 +1,61 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // WIP: possible we switch to Organization model instead of uid
+    // No unauthenticated access to anything
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // users/{userId}
+    // Only the account owner can read or write their own profile.
+    match /users/{userId} {
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // events/{eventId}
+    // Owner or anyone listed in sharedWith[] can read.
+    // Owner or anyone listed in sharedWith[] can write (lets Emma manage Olivia's events).
+    match /events/{eventId} {
+      allow read: if request.auth != null &&
+        (request.auth.uid == resource.data.ownerId ||
+         request.auth.uid in resource.data.sharedWith);
+
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.ownerId;
+
+      allow update, delete: if request.auth != null &&
+        (request.auth.uid == resource.data.ownerId ||
+         request.auth.uid in resource.data.sharedWith);
+    }
+
+    // messages/{msgId}
+    // Only the sender or recipient can read or write.
+    match /messages/{msgId} {
+      allow read: if request.auth != null &&
+        (request.auth.uid == resource.data.senderId ||
+         request.auth.uid == resource.data.recipientId);
+
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.senderId;
+
+      // Messages are immutable after sending — only the read flag can be updated.
+      allow update: if request.auth != null &&
+        request.auth.uid == resource.data.recipientId &&
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(["read"]);
+
+      allow delete: if false;
+    }
+
+    // sites/{siteId}
+    // Only the owner can read or write their saved sites.
+    match /sites/{siteId} {
+      allow read, write: if request.auth != null &&
+        request.auth.uid == resource.data.ownerId;
+
+      allow create: if request.auth != null &&
+        request.auth.uid == request.resource.data.ownerId;
+    }
+  }
+}
