@@ -16,22 +16,7 @@ type UseWeatherReturn = {
   error: string;
 };
 
-type OpenWeatherResponse = {
-  name: string;
-  main: {
-    temp: number;
-    humidity: number;
-  };
-  weather: Array<{
-    description: string;
-    icon: string;
-  }>;
-  wind: {
-    speed: number;
-  };
-};
-
-const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
+const API_KEY = "b68017ae7bfa030893a27f1b67966305";
 
 export function useWeather(): UseWeatherReturn {
   const [sarasota, setSarasota] = useState<CityWeather | null>(null);
@@ -60,7 +45,7 @@ export function useWeather(): UseWeatherReturn {
         const sarasotaData = await sarasotaResponse.json();
         const thousandOaksData = await thousandOaksResponse.json();
 
-        const formatWeather = (data: OpenWeatherResponse): CityWeather => ({
+        const formatWeather = (data: any): CityWeather => ({
           city: data.name,
           temperature: Math.round(data.main.temp),
           description: data.weather[0].description,
