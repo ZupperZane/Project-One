@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import type { Auth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore, memoryLocalCache } from "firebase/firestore";
 import type { Firestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -26,4 +26,6 @@ export const hasFirebaseConfig = requiredKeys.every((key) =>
 
 export const app = hasFirebaseConfig ? initializeApp(firebaseConfig) : null;
 export const auth: Auth | null = app ? getAuth(app) : null;
-export const db: Firestore | null = app ? getFirestore(app) : null;
+export const db: Firestore | null = app
+  ? initializeFirestore(app, { localCache: memoryLocalCache() })
+  : null;

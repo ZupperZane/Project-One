@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
+import { ROUTES } from "../utils/constants";
 
 function Login() {
   const { signInUser, signInWithGoogle, firebaseConfigured } = useAuth();
@@ -11,7 +12,8 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const from = (location.state as { from?: string } | null)?.from ?? "/dashboard";
+  const from =
+    (location.state as { from?: string } | null)?.from ?? ROUTES.HOME;
 
   const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -70,6 +72,9 @@ function Login() {
       <button type="button" onClick={handleGoogleLogin} style={{ marginTop: "0.75rem" }}>
         Sign in with Google
       </button>
+      <p>
+        Need an account? <Link to={ROUTES.SIGNUP}>Signup</Link>
+      </p>
       {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
     </section>
   );

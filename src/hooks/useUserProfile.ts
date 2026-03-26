@@ -34,7 +34,7 @@ export function useUserProfile(): UseUserProfileReturn {
     const fetchProfile = async () => {
       try {
         setLoading(true);
-        const ref = doc(db!, "users", user.uid);
+        const ref = doc(db!, "Users", user.uid);
         const snap = await getDoc(ref);
 
         if (snap.exists()) {

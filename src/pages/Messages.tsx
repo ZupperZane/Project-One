@@ -1,7 +1,5 @@
-export function Messages(){
-    return (
- <div>
-    Messages
- </div>
-    )
+import Chat from "./Chat";
+
+export function Messages() {
+  return <Chat />;
 }
