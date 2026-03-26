@@ -14,12 +14,15 @@ export const CITIES = {
 
 // App route paths
 export const ROUTES = {
-  HOME: "/",
+  LANDING: "/",
   LOGIN: "/login",
+  SIGNUP: "/signup",
   RESET_PASSWORD: "/reset-password",
+  HOME: "/home",
   DASHBOARD: "/dashboard",
   CALENDAR: "/calendar",
   TASKS: "/tasks",
-  MESSAGES: "/messages",
+  CHAT: "/chat",
+  MESSAGES: "/chat",
   SITES: "/sites",
 } as const;
