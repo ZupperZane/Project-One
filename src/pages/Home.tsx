@@ -4,12 +4,16 @@ import Weather from "../Components/Weather";
 import { ListEvents } from "../backend/eventHandler";
 import type { EventRecord } from "../backend/storage";
 import { ROUTES } from "../utils/constants";
+import { useUserProfile } from "../hooks/useUserProfile";
 
 function Home() {
   const [events, setEvents] = useState<EventRecord[]>([]);
   const [error, setError] = useState("");
+  const { profile, loading } = useUserProfile();
 
   useEffect(() => {
+    if (!profile) return;
+
     const loadEvents = async () => {
       try {
         setError("");
@@ -31,9 +35,25 @@ function Home() {
     return () => {
       window.removeEventListener("events:changed", onEventsChanged);
     };
-  }, []);
+  }, [profile]);
 
-  return (
+   if (loading) {
+    return <div className="flex items-center justify-center h-full">Loading...</div>;
+  }
+
+  if (!profile) {
+    return (
+      <div className="h-full w-full flex flex-col items-center justify-center gap-6">
+        <h1 className="text-3xl font-bold">Welcome</h1>
+        <p className="text-base-content/60">Please log in to continue.</p>
+        <Link to={ROUTES.LOGIN} className="btn btn-primary text-xl w-1/2">
+          Login
+        </Link>
+      </div>
+    );
+  }
+
+  return ( 
     <div className="h-auto w-full flex flex-col items-center gap-14 margin-auto">
       <div className="flex items-center justify-center w-full h-25">
         <Link to={ROUTES.CHAT} className="btn btn-primary text-2xl font-bold w-3/4 h-full">
