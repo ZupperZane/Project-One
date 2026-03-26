@@ -11,9 +11,22 @@ function Root() {
         Status: {loading ? "loading" : user ? "authenticated" : "guest"} | Firebase: {firebaseConfigured ? "configured" : "not configured"}
       </p>
       <nav style={{ display: "flex", gap: "0.75rem", marginBottom: "1rem" }}>
-        <Link to="/">Home</Link>
-        <Link to="/login">Login</Link>
-        <Link to="/dashboard">Dashboard</Link>
+
+        {/*Home Button*/}
+        <Link to="/" className="btn btn-neutral">
+          Home
+        </Link>
+
+        {/*Login Button*/}
+        <Link to="/login" className="btn btn-neutral">
+          Login
+        </Link>
+
+        {/*Dashboard Button*/}
+        <Link to="/dashboard" className="btn btn-neutral">
+          Dashboard
+        </Link>
+
       </nav>
       <Outlet />
     </main>
