@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 
 export default function SavedSites() {
 
@@ -6,7 +6,7 @@ export default function SavedSites() {
   const [url, setUrl] = useState("");
   const [color, setColor] = useState("#dbeafe");
 
-  function handleSubmit(e: any) {
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     let finalUrl = url;

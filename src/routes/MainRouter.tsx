@@ -80,14 +80,6 @@ const mainRouter: RouteObject[] = [
           </PrivateRoute>
         ),
       },
-      {
-        path: ROUTES.SITES,
-        element: (
-          <PrivateRoute>
-            <Home />
-          </PrivateRoute>
-        ),
-      },
     ],
   },
 ];

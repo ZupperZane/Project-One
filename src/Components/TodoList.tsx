@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 
 export default function TodoList() {
   const [task, setTask] = useState("");
   const [tasks, setTasks] = useState<string[]>([]);
 
-  function handleAddTask(e: any) {
+  function handleAddTask(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
 
     if (task.trim() === "") return;
