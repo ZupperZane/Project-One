@@ -16,7 +16,7 @@ type UseWeatherReturn = {
   error: string;
 };
 
-const API_KEY = import.meta.env.VITE_OPENWEATHER_API_KEY;
+const API_KEY = "b68017ae7bfa030893a27f1b67966305";
 
 export function useWeather(): UseWeatherReturn {
   const [sarasota, setSarasota] = useState<CityWeather | null>(null);
