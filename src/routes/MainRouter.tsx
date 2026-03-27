@@ -7,6 +7,7 @@ import Landing from "../pages/Landing";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
+import ResetPassword from "../pages/ResetPassword";
 import Dashboard from "../pages/Dashboard";
 import ErrorPage from "../pages/ErrorPage";
 import Chat from "../pages/Chat";
@@ -31,6 +32,10 @@ const mainRouter: RouteObject[] = [
       {
         path: ROUTES.SIGNUP,
         element: <Signup />,
+      },
+      {
+        path: ROUTES.RESET_PASSWORD,
+        element: <ResetPassword />,
       },
       {
         path: ROUTES.DASHBOARD,

@@ -1,6 +1,7 @@
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -72,4 +73,37 @@ export async function DisplayMessages(userId: string): Promise<MessageRecord[]> 
   }
 
   return [...map.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+}
+
+export async function ClearConversationMessages(
+  userId: string,
+  targetUserId: string
+): Promise<number> {
+  if (!userId || !targetUserId) return 0;
+
+  const firestore = requireDb();
+  const messagesRef = collection(firestore, COLLECTIONS.MESSAGES);
+
+  const [forwardSnapshots, backwardSnapshots] = await Promise.all([
+    getDocs(
+      query(
+        messagesRef,
+        where("fromUserId", "==", userId),
+        where("toUserId", "==", targetUserId)
+      )
+    ),
+    getDocs(
+      query(
+        messagesRef,
+        where("fromUserId", "==", targetUserId),
+        where("toUserId", "==", userId)
+      )
+    ),
+  ]);
+
+  const allDocs = [...forwardSnapshots.docs, ...backwardSnapshots.docs];
+  const unique = new Map(allDocs.map((snapshot) => [snapshot.id, snapshot]));
+
+  await Promise.all([...unique.values()].map((snapshot) => deleteDoc(snapshot.ref)));
+  return unique.size;
 }

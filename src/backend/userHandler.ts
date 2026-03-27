@@ -45,6 +45,12 @@ interface EnsureUserInput {
   displayName?: string;
 }
 
+interface UpdateDisplayNameInput {
+  userId: string;
+  displayName: string;
+  email?: string;
+}
+
 const mapUser = (id: string, data: Record<string, unknown>): UserRecord => ({
   id,
   externalId: asString(data.externalId, id),
@@ -107,6 +113,46 @@ export async function EnsureUser(input: EnsureUserInput): Promise<UserRecord> {
 
   await setDoc(userRef, payload);
   return mapUser(input.externalId, payload);
+}
+
+export async function UpdateUserDisplayName(
+  input: UpdateDisplayNameInput
+): Promise<UserRecord> {
+  const userId = input.userId.trim();
+  const displayName = input.displayName.trim();
+  if (!userId) throw new Error("User ID is required.");
+  if (!displayName) throw new Error("Display name is required.");
+
+  const firestore = requireDb();
+  const userRef = doc(firestore, COLLECTIONS.USERS, userId);
+  const existing = await getDoc(userRef);
+
+  if (!existing.exists()) {
+    const payload = {
+      externalId: userId,
+      email: input.email?.trim().toLowerCase() || `${userId}@local.user`,
+      displayName,
+      connectedUserIds: [] as string[],
+      relations: {} as Record<string, string>,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    };
+
+    await setDoc(userRef, payload);
+    return mapUser(userId, payload);
+  }
+
+  const updates: Record<string, unknown> = {
+    displayName,
+    updatedAt: serverTimestamp(),
+  };
+  if (input.email?.trim()) {
+    updates.email = input.email.trim().toLowerCase();
+  }
+
+  await updateDoc(userRef, updates);
+  const refreshed = await getDoc(userRef);
+  return mapUser(refreshed.id, refreshed.data() as Record<string, unknown>);
 }
 
 export async function Signup(input: SignupInput): Promise<UserRecord> {

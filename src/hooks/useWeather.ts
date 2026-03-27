@@ -16,6 +16,21 @@ type UseWeatherReturn = {
   error: string;
 };
 
+type WeatherApiResponse = {
+  name: string;
+  main: {
+    temp: number;
+    humidity: number;
+  };
+  weather: Array<{
+    description: string;
+    icon: string;
+  }>;
+  wind: {
+    speed: number;
+  };
+};
+
 const API_KEY = "b68017ae7bfa030893a27f1b67966305";
 
 export function useWeather(): UseWeatherReturn {
@@ -42,10 +57,10 @@ export function useWeather(): UseWeatherReturn {
           throw new Error("Failed to fetch weather data");
         }
 
-        const sarasotaData = await sarasotaResponse.json();
-        const thousandOaksData = await thousandOaksResponse.json();
+        const sarasotaData = (await sarasotaResponse.json()) as WeatherApiResponse;
+        const thousandOaksData = (await thousandOaksResponse.json()) as WeatherApiResponse;
 
-        const formatWeather = (data: any): CityWeather => ({
+        const formatWeather = (data: WeatherApiResponse): CityWeather => ({
           city: data.name,
           temperature: Math.round(data.main.temp),
           description: data.weather[0].description,

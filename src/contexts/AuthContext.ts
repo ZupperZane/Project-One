@@ -7,6 +7,7 @@ export interface AuthContextValue {
   firebaseConfigured: boolean;
   createUser: (email: string, password: string) => Promise<UserCredential>;
   signInUser: (email: string, password: string) => Promise<UserCredential>;
+  resetUserPassword: (email: string) => Promise<void>;
   signInWithGoogle: () => Promise<UserCredential>;
   signOutUser: () => Promise<void>;
   updateUserProfile: (profile: {

@@ -1,7 +1,8 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
+import { ROUTES } from "../utils/constants";
 import "../login.css";
 
 function Login() {
@@ -84,6 +85,13 @@ function Login() {
               Sign in
             </button>
           </form>
+
+          <p className="text-center text-base">
+            Forgot your password?{" "}
+            <Link className="font-semibold underline" to={ROUTES.RESET_PASSWORD}>
+              Reset it here
+            </Link>
+          </p>
 
           <button
             onClick={handleGoogleLogin}

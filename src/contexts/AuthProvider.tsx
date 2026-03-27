@@ -4,6 +4,7 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   onAuthStateChanged,
+  sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
@@ -46,6 +47,16 @@ function AuthProvider({ children }: AuthProviderProps) {
     );
   };
 
+  const resetUserPassword = (email: string) => {
+    if (!auth) return authNotConfiguredError();
+    const normalizedEmail = email.trim().toLowerCase();
+    if (!normalizedEmail) {
+      return Promise.reject(new Error("Email is required for password reset."));
+    }
+
+    return sendPasswordResetEmail(auth, normalizedEmail);
+  };
+
   const signInWithGoogle = () => {
     if (!auth) return authNotConfiguredError();
     setLoading(true);
@@ -81,6 +92,7 @@ function AuthProvider({ children }: AuthProviderProps) {
   const value = {
     createUser,
     signInUser,
+    resetUserPassword,
     signInWithGoogle,
     signOutUser,
     updateUserProfile,
