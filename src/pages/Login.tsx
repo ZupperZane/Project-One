@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { FormEvent } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
+import "../login.css";
 
 function Login() {
   const { signInUser, signInWithGoogle, firebaseConfigured } = useAuth();
@@ -49,7 +50,7 @@ function Login() {
 
   return (
     <div className="flex justify-center items-center">
-      <div className="card bg-base-200 w-100">
+      <div className="login-card">
         <div className="card-body gap-5">
 
           <h2 className="card-title text-3xl font-bold justify-center">Login</h2>

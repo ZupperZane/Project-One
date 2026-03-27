@@ -4,6 +4,7 @@
 :root {
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   line-height: 1.5;
+  --bg: #2886AD;
 }
 
 * {
@@ -15,7 +16,7 @@ body {
 }
 
 main {
-  max-width: 900px;
+
   margin: 0 auto;
   padding: 2rem 1rem;
 }

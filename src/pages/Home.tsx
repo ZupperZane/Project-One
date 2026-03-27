@@ -74,21 +74,24 @@ function Home() {
       </div>
 
       <div className="flex items-center justify-center w-full h-25">
-        <Link to={ROUTES.SITES} className="btn btn-outline text-2xl font-bold w-3/4 h-full">
+        <Link to={ROUTES.SITES} className="btn text-2xl font-bold w-3/4 h-full" style={{ background: "#DA6535", color: "#fff", borderColor: "#DA6535" }}>
           Saved Sites
         </Link>
       </div>
 
-      <div className="flex items-center justify-center w-3/4 h-25 bg-base-300 rounded-xl p-4">
+      <div className="w-3/4 rounded-xl p-4" style={{ background: "rgba(0,0,0,0.15)" }}>
+        <h3 className="font-semibold mb-3 text-white text-center">Weather</h3>
         <Weather />
       </div>
 
-      <div className="w-3/4 bg-base-200 rounded-xl p-4">
-        <h3 className="font-semibold mb-2">Recent Events</h3>
-        {events.length === 0 ? <p>No recent events yet.</p> : null}
-        <ul className="list-disc pl-5">
+      <div className="w-3/4 rounded-xl p-4" style={{ background: "rgba(0,0,0,0.15)" }}>
+        <h3 className="font-semibold mb-3 text-white">Recent Events</h3>
+        {events.length === 0 ? <p className="text-white opacity-70">No recent events yet.</p> : null}
+        <ul style={{ listStyle: "none", padding: 0, margin: 0, display: "flex", flexDirection: "column", gap: "0.4rem" }}>
           {events.map((event) => (
-            <li key={event.id}>{event.name}</li>
+            <li key={event.id} style={{ color: "#fff", padding: "0.4rem 0.75rem", background: "rgba(255,255,255,0.12)", borderRadius: "8px" }}>
+              {event.name}
+            </li>
           ))}
         </ul>
         {error ? <p className="text-error">{error}</p> : null}
