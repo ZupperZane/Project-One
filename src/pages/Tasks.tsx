@@ -10,6 +10,8 @@ import {
 import { EnsureUser } from "../backend/userHandler";
 import type { EventRecord, ListItemRecord, UserRecord } from "../backend/storage";
 import useAuth from "../hooks/useAuth";
+import "../Tasks.css"
+
 
 function Tasks() {
   const { user } = useAuth();
@@ -97,50 +99,48 @@ function Tasks() {
     await refresh(selfUser.id, day);
   };
 
-  return (
-    <section>
-      <h2>To-Do / Calendar</h2>
-      <label htmlFor="task-day">Day</label>
-      <input
-        id="task-day"
-        type="date"
-        value={day}
-        onChange={(event) => setDay(event.target.value)}
-      />
+    return (
+    <section className="tasks-section">
+      <h2 className="tasks-title">📋 To-Do / Calendar</h2>
 
-      <form onSubmit={handleAdd} style={{ marginTop: "0.75rem", display: "grid", gap: "0.5rem", maxWidth: "420px" }}>
-        <input
-          type="text"
-          value={newItem}
-          onChange={(event) => setNewItem(event.target.value)}
-          placeholder="Add to-do item"
-        />
-        <button type="submit">Add To List</button>
+      <div>
+        <label htmlFor="task-day" className="day-label">Day</label>
+        <input id="task-day" type="date" value={day} onChange={(e) => setDay(e.target.value)} className="day-input" />
+      </div>
+
+      <form onSubmit={handleAdd} className="task-form">
+        <input type="text" value={newItem} onChange={(e) => setNewItem(e.target.value)} placeholder="Add to-do item..." className="task-input" />
+        <button type="submit" className="task-submit-btn">＋ Add To List</button>
       </form>
+<div className="tasks-grid">
+        <div className="card">
+          <h3 className="card-title">Tasks for {day || "..."}</h3>
+          <ul className="task-list">
+            {items.map((item) => (
+              <li key={item.id} className="task-item">
+                <span className={`task-text ${item.completed ? "completed" : ""}`}>{item.text}</span>
+                <div className="task-actions">
+                  <button type="button" onClick={() => void toggleItem(item)} className={item.completed ? "btn-undo" : "btn-done"}>
+                    {item.completed ? "Undo" : "Done"}
+                  </button>
+                  <button type="button" onClick={() => void removeItem(item)} className="btn-delete">Delete</button>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </div>
 
-      <h3>DisplayList({day})</h3>
-      <ul>
-        {items.map((item) => (
-          <li key={item.id}>
-            <button type="button" onClick={() => void toggleItem(item)}>
-              {item.completed ? "Undo" : "Done"}
-            </button>{" "}
-            {item.text}
-            <button type="button" onClick={() => void removeItem(item)} style={{ marginLeft: "0.5rem" }}>
-              Delete
-            </button>
-          </li>
-        ))}
-      </ul>
+        <div className="card">
+          <h3 className="card-title"> Events for {day || "..."}</h3>
+          <ul className="task-list">
+            {calendar.map((event) => (
+              <li key={event.id} className="task-item">{event.name}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
 
-      <h3>DisplayCalender({day})</h3>
-      <ul>
-        {calendar.map((event) => (
-          <li key={event.id}>{event.name}</li>
-        ))}
-      </ul>
-
-      {error ? <p style={{ color: "crimson" }}>{error}</p> : null}
+      {error ? <p className="task-error">{error}</p> : null}
     </section>
   );
 }

@@ -1,0 +1,125 @@
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --blue-light: #78CFF8;
+  --blue-main: #35AADA;
+  --blue-dark: #0D3C4F;
+  --orange-light: #F29774;
+  --orange-main: #DA6535;
+  --orange-dark: #451B0A;
+  --gray-light: #C2C9CC;
+  --gray-mid: #595F61;
+  --gray-dark: #191B1C;
+  --surface: #383B3D;
+}
+
+body {
+  background-color: var(--bg);
+  color: var(--gray-light);
+  font-family: sans-serif;
+   min-height: 100vh;
+}
+
+.root-header {
+  background-color: #DA6535;
+  padding: 0.75rem 2rem;
+  border: 6px solid #451B0A;
+  border-radius: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.root-brand {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: black;
+  letter-spacing: 0.05em;
+}
+
+.root-status {
+  font-size: 0.75rem;
+  color: var(--gray-dark);
+  opacity: 0.7;
+}
+.root-nav {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+  background-color: transparent;
+  border-bottom: none;
+  padding: 0.75rem 1.5rem;
+  gap: 0.75rem;
+}
+
+.root-nav a,
+.root-nav button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.6rem 1rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: black;
+  text-decoration: none;
+  background-color: #78CFF8;
+  border: 4px solid #D3EEFC;
+  border-radius: 90px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+  letter-spacing: 0.05em;
+  box-shadow: 0 0 6px rgba(53, 170, 218, 0.3);
+}
+
+.root-nav a:hover,
+.root-nav button:hover {
+  background-color: var(--blue-main);
+  border-color: var(--blue-light);
+  color: white;
+  box-shadow: 0 0 12px rgba(53, 170, 218, 0.6);
+}
+.root-nav button {
+  color: var(--orange-light);
+  border-color: var(--orange-main);
+  box-shadow: 0 0 6px rgba(218, 101, 53, 0.3);
+}
+
+.root-nav button:hover {
+  background-color: var(--orange-main);
+  border-color: var(--orange-light);
+  color: white;
+  box-shadow: 0 0 12px rgba(218, 101, 53, 0.6);
+}
+.root-content {
+  padding: 2rem;
+}
+
+.root-nav a.nav-landing {
+  color: var(--gray-light);
+}
+
+.root-nav a.nav-login {
+  color: var(--blue-light);
+  background-color: rgba(53, 170, 218, 0.15);
+}
+
+.root-nav a.nav-login:hover {
+  background-color: var(--blue-main);
+  color: white;
+}
+
+.root-nav a.nav-signup {
+  color: white;
+  background-color: var(--orange-main);
+}
+
+.root-nav a.nav-signup:hover {
+  background-color: var(--orange-dark);
+  color: white;
+}
