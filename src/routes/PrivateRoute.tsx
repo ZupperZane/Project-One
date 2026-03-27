@@ -29,7 +29,7 @@ function PrivateRoute({ children, requiredRole }: PrivateRouteProps) {
   // redirect to dashboard silently. This is a failsafe — UI should never
   // render the link in the first place for the wrong role.
   if (requiredRole && profile?.role !== requiredRole) {
-    return <Navigate to={ROUTES.DASHBOARD} replace />;
+    return <Navigate to={ROUTES.HOME} replace />;
   }
 
   return <>{children}</>;
