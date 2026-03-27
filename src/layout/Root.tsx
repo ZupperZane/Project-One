@@ -29,7 +29,6 @@ function Root() {
         {user ? (
           <>
             <Link to={ROUTES.HOME}>Home</Link>
-            <Link to={ROUTES.DASHBOARD}>Dashboard</Link>
             <Link to={ROUTES.CHAT}>Chat</Link>
             <Link to={ROUTES.TASKS}>To-Do</Link>
             <Link to={ROUTES.CALENDAR}>Calendar</Link>

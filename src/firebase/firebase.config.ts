@@ -5,12 +5,12 @@ import { initializeFirestore, memoryLocalCache } from "firebase/firestore";
 import type { Firestore } from "firebase/firestore";
 
 const firebaseConfig = {
-apiKey: "AIzaSyDyiseMS7y6D6CantfHmOgYVX1iM1JFE7o",
-  authDomain: "test-93446.firebaseapp.com",
-  projectId: "test-93446",
-  storageBucket: "test-93446.firebasestorage.app",
-  messagingSenderId: "348490248132",
-  appId: "1:348490248132:web:8e584840930b560bf23e91"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
 const requiredKeys: Array<keyof typeof firebaseConfig> = [

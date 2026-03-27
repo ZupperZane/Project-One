@@ -3,7 +3,6 @@ import Root from "../layout/Root";
 import PrivateRoute from "./PrivateRoute";
 import { ROUTES } from "../utils/constants";
 
-import Dashboard from "../pages/Dashboard";
 import Landing from "../pages/Landing";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
@@ -31,14 +30,6 @@ const mainRouter: RouteObject[] = [
       {
         path: ROUTES.SIGNUP,
         element: <Signup />,
-      },
-      {
-        path: ROUTES.DASHBOARD,
-        element: (
-          <PrivateRoute>
-            <Dashboard />
-          </PrivateRoute>
-        ),
       },
       {
         path: ROUTES.HOME,

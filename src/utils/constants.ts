@@ -19,7 +19,6 @@ export const ROUTES = {
   SIGNUP: "/signup",
   RESET_PASSWORD: "/reset-password",
   HOME: "/home",
-  DASHBOARD: "/dashboard",
   CALENDAR: "/calendar",
   TASKS: "/tasks",
   CHAT: "/chat",
