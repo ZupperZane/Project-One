@@ -223,6 +223,22 @@ function Tasks() {
     void init();
   }, [day, user]);
 
+  useEffect(() => {
+    if (!selfUser) return;
+
+    const refreshSharedTasks = () => {
+      void refresh(selfUser.id, day);
+    };
+
+    const interval = window.setInterval(refreshSharedTasks, 5000);
+    window.addEventListener("focus", refreshSharedTasks);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refreshSharedTasks);
+    };
+  }, [day, selfUser]);
+
   const handleAdd = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
@@ -319,7 +335,7 @@ function Tasks() {
     <section className="mx-auto max-w-5xl space-y-4">
       <div className="rounded-xl bg-base-200 p-4">
         <h2 className="text-3xl font-bold">Tasks</h2>
-        <p className="mt-1 text-lg">Pick a day, add a task, then mark tasks complete.</p>
+        <p className="mt-1 text-lg">Shared checklist: all users can view and update tasks for this day.</p>
       </div>
 
       <div className="rounded-xl bg-base-100 p-4">
@@ -374,14 +390,17 @@ function Tasks() {
                 </label>
                 <p className="mt-1 text-sm opacity-80">Added by: {resolvePosterName(item.userId)}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void removeItem(item)}
-                    className="btn btn-error btn-sm"
-                    disabled={busyItemId === item.id}
-                  >
+                {user?.uid !== "hkj5avXj30WV9ixoD9vLr7dvlo63" && (
+                    <button
+                      type="button"
+                      onClick={() => void removeItem(item)}
+                      className="btn btn-error btn-sm"
+                      disabled={busyItemId === item.id}
+                    >
                     Delete
-                  </button>
+                    </button>
+                  )}
+              
                 </div>
               </li>
             ))}
@@ -448,3 +467,4 @@ function Tasks() {
 }
 
 export { Tasks };
+                  

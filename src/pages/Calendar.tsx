@@ -146,9 +146,11 @@ function Calendar() {
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => void rename(entry)}>
                   Rename
                 </button>
-                <button type="button" className="btn btn-error btn-sm" onClick={() => void remove(entry)}>
+                {user?.uid !== "hkj5avXj30WV9ixoD9vLr7dvlo63" && (
+                 <button type="button" className="btn btn-error btn-sm" onClick={() => void remove(entry)}>
                   Delete
                 </button>
+                  )}
               </div>
             </li>
           ))}
