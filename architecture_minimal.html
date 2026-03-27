@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>Globo Life — Architecture</title>
+<style>
+  body { font-family: monospace; font-size: 13px; max-width: 900px; margin: 24px auto; padding: 0 16px; color: #111; }
+  h1 { font-size: 16px; border-bottom: 2px solid #000; padding-bottom: 4px; margin-bottom: 20px; }
+  h2 { font-size: 13px; background: #000; color: #fff; padding: 3px 8px; margin: 18px 0 8px; text-transform: uppercase; letter-spacing: .08em; }
+  .layer { border: 1px solid #aaa; margin-bottom: 4px; }
+  .layer-head { padding: 4px 8px; font-weight: bold; border-bottom: 1px solid #aaa; display: flex; justify-content: space-between; }
+  .layer-head.fe  { background: #dce8ff; }
+  .layer-head.mid { background: #e8d8ff; }
+  .layer-head.be  { background: #d0f0ed; }
+  .nodes { display: flex; flex-wrap: wrap; gap: 8px; padding: 8px; }
+  .node { border: 1px solid #999; padding: 5px 8px; min-width: 160px; background: #fafafa; }
+  .node .name { font-weight: bold; }
+  .node .own  { font-size: 11px; color: #555; }
+  .node .det  { font-size: 11px; color: #333; margin-top: 3px; }
+  .node.full  { flex: 1 1 100%; }
+  .arrow { text-align: center; font-size: 18px; margin: 2px 0; color: #555; }
+  .ext-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 4px; }
+  .ext-group { border: 1px solid #aaa; padding: 6px 8px; min-width: 160px; background: #f5f5f5; }
+  .ext-group .label { font-weight: bold; font-size: 11px; border-bottom: 1px solid #ccc; margin-bottom: 4px; padding-bottom: 2px; }
+  .ext-item { font-size: 12px; margin-top: 2px; }
+  .collections { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  .coll { border: 1px solid #888; min-width: 180px; }
+  .coll-head { background: #333; color: #fff; padding: 3px 8px; font-weight: bold; font-size: 12px; }
+  .coll-path { font-weight: normal; font-size: 10px; color: #bbb; }
+  .field { display: flex; gap: 6px; padding: 2px 8px; border-top: 1px solid #ddd; font-size: 11px; }
+  .fname { min-width: 100px; }
+  .pk { color: #a67c00; }
+  .fk { color: #a00; }
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 12px; }
+  th { background: #333; color: #fff; padding: 4px 8px; text-align: left; }
+  td { padding: 5px 8px; border-bottom: 1px solid #ddd; vertical-align: top; }
+  tr:hover td { background: #f9f9f9; }
+</style>
+</head>
+<body>
+
+<h1>Globo Life — System Architecture</h1>
+
+<h2>01 · System Architecture</h2>
+
+<div class="layer">
+  <div class="layer-head fe">
+    <span>FRONT END — routing, layout, pure UI</span>
+    <span>Jason · Brandon</span>
+  </div>
+  <div class="nodes">
+    <div class="node">
+      <div class="name">main.jsx</div>
+      <div class="own">Owner: Jason</div>
+      <div class="det">Entry point · mounts App</div>
+    </div>
+    <div class="node">
+      <div class="name">App.jsx</div>
+      <div class="own">Owner: Jason</div>
+      <div class="det">Root · wraps Router + providers</div>
+    </div>
+    <div class="node">
+      <div class="name">React Router</div>
+      <div class="own">Owner: Jason</div>
+      <div class="det">Route definitions · navigation map<br>depends on: ProtectedRoute, ROUTE_PATHS</div>
+    </div>
+    <div class="node">
+      <div class="name">ProtectedRoute.jsx</div>
+      <div class="own">Owner: Jason</div>
+      <div class="det">Role gate: guest / primary / supportive<br>props: requiredRole, children</div>
+    </div>
+    <div class="node">
+      <div class="name">/layouts</div>
+      <div class="own">Owner: Brandon</div>
+      <div class="det">Page shells · navigation chrome</div>
+    </div>
+    <div class="node">
+      <div class="name">Footer.jsx</div>
+      <div class="own">Owner: Brandon</div>
+      <div class="det">Static shell</div>
+    </div>
+    <div class="node">
+      <div class="name">UI components/</div>
+      <div class="own">Owner: Brandon</div>
+      <div class="det">Buttons · modals · shared widgets</div>
+    </div>
+  </div>
+</div>
+
+<div class="arrow">↓ renders into ↓</div>
+
+<div class="layer">
+  <div class="layer-head mid">
+    <span>MIDDLE — JSX (~85% of codebase)</span>
+    <span>Shared</span>
+  </div>
+  <div class="nodes">
+    <div class="node">
+      <div class="name">Login.jsx</div>
+      <div class="own">Owner: Chris</div>
+      <div class="det">hook: useAuth()<br>out: redirect on success</div>
+    </div>
+    <div class="node">
+      <div class="name">PasswordRecovery.jsx</div>
+      <div class="own">Owner: Chris</div>
+      <div class="det">hook: useAuth().resetPassword()<br>ext: Firebase Auth built-in email</div>
+    </div>
+    <div class="node">
+      <div class="name">Dashboard.jsx</div>
+      <div class="own">Owner: Zane</div>
+      <div class="det">Home screen · recent events<br>hooks: useCalendar(), useWeather()<br>composes: WeatherWidget</div>
+    </div>
+    <div class="node">
+      <div class="name">WeatherWidget.jsx</div>
+      <div class="own">Owner: Yasir</div>
+      <div class="det">2-city live display<br>hook: useWeather()<br>data: {sarasota, thousandOaks}</div>
+    </div>
+    <div class="node">
+      <div class="name">Calendar.jsx</div>
+      <div class="own">Owner: Brandon</div>
+      <div class="det">Shared calendar · role-aware<br>hook: useCalendar()<br>data: events[], userRole<br>out: create / edit / delete event</div>
+    </div>
+    <div class="node">
+      <div class="name">TodoList.jsx</div>
+      <div class="own">Owner: Yasir</div>
+      <div class="det">hook: useCalendar()<br>data: todos[], linked eventId<br>out: convert todo ↔ event</div>
+    </div>
+    <div class="node">
+      <div class="name">Chat.jsx</div>
+      <div class="own">Owner: Chris</div>
+      <div class="det">Emma ↔ Olivia messaging<br>hook: useChat() — real-time<br>data: messages[], senderId</div>
+    </div>
+    <div class="node">
+      <div class="name">SavedSites.jsx</div>
+      <div class="own">Owner: Yasir</div>
+      <div class="det">Website grid<br>hook: useSites()<br>data: sites[] {label, url, color, order}</div>
+    </div>
+  </div>
+</div>
+
+<div class="arrow">↓ calls hooks ↓</div>
+
+<div class="layer">
+  <div class="layer-head be">
+    <span>BACK END — hooks, config, user system</span>
+    <span>Chris · Yasir · Jason · Zane</span>
+  </div>
+  <div class="nodes">
+    <div class="node">
+      <div class="name">useAuth()</div>
+      <div class="own">Owner: Chris</div>
+      <div class="det">returns: {user, role, login, logout, resetPassword}</div>
+    </div>
+    <div class="node">
+      <div class="name">useCalendar()</div>
+      <div class="own">Owner: Yasir</div>
+      <div class="det">returns: {events, addEvent, editEvent, deleteEvent}</div>
+    </div>
+    <div class="node">
+      <div class="name">useChat()</div>
+      <div class="own">Owner: Chris</div>
+      <div class="det">Real-time onSnapshot listener<br>returns: {messages, sendMessage}</div>
+    </div>
+    <div class="node">
+      <div class="name">useSites()</div>
+      <div class="own">Owner: Yasir</div>
+      <div class="det">returns: {sites, addSite, removeSite}</div>
+    </div>
+    <div class="node">
+      <div class="name">useWeather()</div>
+      <div class="own">Owner: Yasir</div>
+      <div class="det">returns: {sarasota, thousandOaks, loading, error}</div>
+    </div>
+    <div class="node">
+      <div class="name">firebase.config.js</div>
+      <div class="own">Owner: Zane</div>
+      <div class="det">Firebase init · env vars<br>exports: auth, db</div>
+    </div>
+    <div class="node">
+      <div class="name">utils/constants.js</div>
+      <div class="own">Owner: Jason</div>
+      <div class="det">exports: ROLES, CITIES, ROUTE_PATHS</div>
+    </div>
+    <div class="node">
+      <div class="name">Firebase security rules</div>
+      <div class="own">Owner: Jason</div>
+      <div class="det">Firestore access control by role<br>enforces sharedWith[] access</div>
+    </div>
+    <div class="node full">
+      <div class="name">User system</div>
+      <div class="own">Owner: Jason</div>
+      <div class="det">ProtectedRoute logic · role resolution · route mapping<br>roles: guest (public) · primary = Olivia · supportive = Emma</div>
+    </div>
+  </div>
+</div>
+
+<div class="arrow">↓ external services ↓</div>
+
+<div class="ext-row">
+  <div class="ext-group">
+    <div class="label">Firebase (Zane setup / Chris hooks)</div>
+    <div class="ext-item">Firebase Auth — login · session · password reset</div>
+    <div class="ext-item">Firestore DB — events · messages · sites · users</div>
+  </div>
+  <div class="ext-group">
+    <div class="label">Live data (Yasir)</div>
+    <div class="ext-item">Weather API — Sarasota FL · Thousand Oaks CA</div>
+  </div>
+  <div class="ext-group">
+    <div class="label">Hosting (Zane)</div>
+    <div class="ext-item">Netlify — CI/CD · auto-deploy from GitHub</div>
+    <div class="ext-item">netlify.toml — build cmd · publish dir · redirects</div>
+    <div class="ext-item">Host server — infrastructure</div>
+  </div>
+</div>
+
+
+<h2>02 · Firestore Data Model (Jason + Yasir)</h2>
+
+<div class="collections">
+  <div class="coll">
+    <div class="coll-head">users <span class="coll-path">/users/{userId}</span></div>
+    <div class="field"><span class="fname pk">userId</span><span>string (PK) — Firebase UID</span></div>
+    <div class="field"><span class="fname">displayName</span><span>string</span></div>
+    <div class="field"><span class="fname">email</span><span>string</span></div>
+    <div class="field"><span class="fname">role</span><span>string — primary | supportive</span></div>
+    <div class="field"><span class="fname fk">linkedUserId</span><span>string (FK) — Emma ↔ Olivia</span></div>
+    <div class="field"><span class="fname">createdAt</span><span>timestamp</span></div>
+  </div>
+  <div class="coll">
+    <div class="coll-head">events <span class="coll-path">/events/{eventId}</span></div>
+    <div class="field"><span class="fname pk">eventId</span><span>string (PK) — auto-id</span></div>
+    <div class="field"><span class="fname fk">ownerId</span><span>string (FK) → users</span></div>
+    <div class="field"><span class="fname">title</span><span>string</span></div>
+    <div class="field"><span class="fname">date</span><span>timestamp</span></div>
+    <div class="field"><span class="fname">type</span><span>string — appointment|social|todo</span></div>
+    <div class="field"><span class="fname">sharedWith</span><span>string[] — userIds with access</span></div>
+    <div class="field"><span class="fname">isTodo</span><span>boolean — todo↔calendar flag</span></div>
+    <div class="field"><span class="fname">todoCompleted</span><span>boolean</span></div>
+  </div>
+  <div class="coll">
+    <div class="coll-head">messages <span class="coll-path">/messages/{msgId}</span></div>
+    <div class="field"><span class="fname pk">msgId</span><span>string (PK) — auto-id</span></div>
+    <div class="field"><span class="fname fk">senderId</span><span>string (FK) → users</span></div>
+    <div class="field"><span class="fname fk">recipientId</span><span>string (FK) → users</span></div>
+    <div class="field"><span class="fname">text</span><span>string</span></div>
+    <div class="field"><span class="fname">sentAt</span><span>timestamp</span></div>
+    <div class="field"><span class="fname">read</span><span>boolean</span></div>
+  </div>
+  <div class="coll">
+    <div class="coll-head">sites <span class="coll-path">/sites/{siteId}</span></div>
+    <div class="field"><span class="fname pk">siteId</span><span>string (PK) — auto-id</span></div>
+    <div class="field"><span class="fname fk">ownerId</span><span>string (FK) → users</span></div>
+    <div class="field"><span class="fname">label</span><span>string — display name</span></div>
+    <div class="field"><span class="fname">url</span><span>string</span></div>
+    <div class="field"><span class="fname">color</span><span>string — grid tile color</span></div>
+    <div class="field"><span class="fname">order</span><span>number — grid position</span></div>
+  </div>
+</div>
+<p style="font-size:11px;margin-top:6px;color:#555;"><span class="pk">■ PK</span> &nbsp; <span class="fk">■ FK</span></p>
+
+
+<h2>03 · Hooks Reference</h2>
+
+<table>
+  <thead>
+    <tr><th>Hook</th><th>Returns</th><th>Calls</th><th>Used by</th><th>Owner</th></tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>useAuth()</strong></td>
+      <td>{user, role, login, logout, resetPassword}</td>
+      <td>Firebase Auth</td>
+      <td>Login.jsx, PasswordRecovery.jsx, ProtectedRoute.jsx</td>
+      <td>Chris</td>
+    </tr>
+    <tr>
+      <td><strong>useCalendar()</strong></td>
+      <td>{events, addEvent, editEvent, deleteEvent}</td>
+      <td>Firestore DB</td>
+      <td>Calendar.jsx, TodoList.jsx, Dashboard.jsx</td>
+      <td>Yasir</td>
+    </tr>
+    <tr>
+      <td><strong>useChat()</strong></td>
+      <td>{messages, sendMessage}</td>
+      <td>Firestore DB (real-time)</td>
+      <td>Chat.jsx</td>
+      <td>Chris</td>
+    </tr>
+    <tr>
+      <td><strong>useSites()</strong></td>
+      <td>{sites, addSite, removeSite}</td>
+      <td>Firestore DB</td>
+      <td>SavedSites.jsx</td>
+      <td>Yasir</td>
+    </tr>
+    <tr>
+      <td><strong>useWeather()</strong></td>
+      <td>{sarasota, thousandOaks, loading, error}</td>
+      <td>Weather API</td>
+      <td>WeatherWidget.jsx, Dashboard.jsx</td>
+      <td>Yasir</td>
+    </tr>
+  </tbody>
+</table>
+
+</body>
+</html>
