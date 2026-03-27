@@ -10,9 +10,11 @@ import {
 import { EnsureUser } from "../backend/userHandler";
 import type { EventRecord, ListItemRecord, UserRecord } from "../backend/storage";
 import useAuth from "../hooks/useAuth";
+import { useActiveProfile } from "../hooks/useActiveProfile";
 
 function Tasks() {
   const { user } = useAuth();
+  const { activeUserId } = useActiveProfile();
   const [selfUser, setSelfUser] = useState<UserRecord | null>(null);
   const [day, setDay] = useState(() => new Date().toISOString().slice(0, 10));
   const [items, setItems] = useState<ListItemRecord[]>([]);
@@ -32,20 +34,15 @@ function Tasks() {
 
   useEffect(() => {
     const init = async () => {
-      if (!user) return;
+      if (!user || !activeUserId) return;
 
-      const localUser = await EnsureUser({
-        externalId: user.uid,
-        email: user.email ?? undefined,
-        displayName: user.displayName ?? undefined,
-      });
-
+      const localUser = await EnsureUser({ externalId: activeUserId });
       setSelfUser(localUser);
       await refresh(localUser.id, day);
     };
 
     void init();
-  }, [day, user]);
+  }, [day, user, activeUserId]);
 
   const handleAdd = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();

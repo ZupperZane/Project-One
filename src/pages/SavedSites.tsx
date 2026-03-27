@@ -8,9 +8,11 @@ import {
 import { EnsureUser } from "../backend/userHandler";
 import type { SavedSiteRecord, UserRecord } from "../backend/storage";
 import useAuth from "../hooks/useAuth";
+import { useActiveProfile } from "../hooks/useActiveProfile";
 
 function SavedSites() {
   const { user, loading } = useAuth();
+  const { activeUserId } = useActiveProfile();
   const [selfUser, setSelfUser] = useState<UserRecord | null>(null);
   const [sites, setSites] = useState<SavedSiteRecord[]>([]);
   const [title, setTitle] = useState("");
@@ -22,19 +24,14 @@ function SavedSites() {
   };
 
   const resolveCurrentBackendUser = useCallback(async () => {
-    if (!user) {
+    if (!user || !activeUserId) {
       throw new Error("You must be signed in to manage saved sites.");
     }
 
-    const localUser = await EnsureUser({
-      externalId: user.uid,
-      email: user.email ?? undefined,
-      displayName: user.displayName ?? undefined,
-    });
-
+    const localUser = await EnsureUser({ externalId: activeUserId });
     setSelfUser(localUser);
     return localUser;
-  }, [user]);
+  }, [user, activeUserId]);
 
   useEffect(() => {
     const setup = async () => {

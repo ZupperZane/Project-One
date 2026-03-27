@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, getDocFromServer, setDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../firebase/firebase.config";
 import useAuth from "./useAuth";
 import type { Role } from "../utils/constants";
@@ -35,14 +35,27 @@ export function useUserProfile(): UseUserProfileReturn {
       try {
         setLoading(true);
         const ref = doc(db!, "Users", user.uid);
-        const snap = await getDoc(ref);
+        // getDocFromServer bypasses the Firestore cache so we always get
+        // the latest data, including any manually-set fields like linkedUserId.
+        const snap = await getDocFromServer(ref);
 
         if (snap.exists()) {
-          setProfile(snap.data() as UserProfile);
+          const data = snap.data();
+          const profile: UserProfile = {
+            uid: (data.uid as string | undefined) ?? user.uid,
+            displayName: (data.displayName as string | undefined) ?? user.displayName ?? user.email ?? "User",
+            email: (data.email as string | undefined) ?? user.email ?? "",
+            role: (data.role as Role | undefined) ?? "primary",
+            linkedUserId: (data.linkedUserId as string | null | undefined) ?? null,
+          };
+          // Persist any defaults we had to fill in (e.g. if doc was created
+          // by EnsureUser which doesn't write role/linkedUserId).
+          if (!data.role) {
+            await setDoc(ref, { role: profile.role }, { merge: true });
+          }
+          setProfile(profile);
         } else {
           // First-time login: create a minimal profile doc.
-          // Role defaults to "primary" — Zane/admin should set the correct
-          // role and linkedUserId in the Firebase console after account creation.
           const newProfile: UserProfile = {
             uid: user.uid,
             displayName: user.displayName ?? user.email ?? "User",

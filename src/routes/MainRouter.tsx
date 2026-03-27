@@ -3,11 +3,11 @@ import Root from "../layout/Root";
 import PrivateRoute from "./PrivateRoute";
 import { ROUTES } from "../utils/constants";
 
+import Dashboard from "../pages/Dashboard";
 import Landing from "../pages/Landing";
 import Home from "../pages/Home";
 import Login from "../pages/Login";
 import Signup from "../pages/Signup";
-import Dashboard from "../pages/Dashboard";
 import ErrorPage from "../pages/ErrorPage";
 import Chat from "../pages/Chat";
 import { Tasks } from "../pages/Tasks";
