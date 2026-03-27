@@ -5,10 +5,8 @@ import {
   doc,
   getDoc,
   getDocs,
-  query,
   serverTimestamp,
   updateDoc,
-  where,
 } from "firebase/firestore";
 import {
   COLLECTIONS,
@@ -105,7 +103,7 @@ export async function deleteFromList(input: DeleteFromListInput): Promise<boolea
   const data = itemSnap.data() as Record<string, unknown>;
   const listName = normalizeListName(input.listName);
 
-  if (data.userId !== input.userId || data.listName !== listName) {
+  if (data.listName !== listName) {
     return false;
   }
 
@@ -123,8 +121,8 @@ export async function editfromList(
 
   const existing = itemSnap.data() as Record<string, unknown>;
   const listName = normalizeListName(input.listName);
-  if (existing.userId !== input.userId || existing.listName !== listName) {
-    throw new Error("You do not have permission to edit this list item.");
+  if (existing.listName !== listName) {
+    throw new Error("List item was not found in this list.");
   }
 
   const updates: Record<string, unknown> = { updatedAt: serverTimestamp() };
@@ -151,16 +149,14 @@ export async function editfromList(
 
 export async function DisplayList(
   day: string,
-  userId: string,
+  _userId: string,
   listName = "default"
 ): Promise<ListItemRecord[]> {
   const firestore = requireDb();
   const normalizedListName = normalizeListName(listName);
   const dayKey = normalizeDay(day);
 
-  const snapshots = await getDocs(
-    query(collection(firestore, COLLECTIONS.LIST_ITEMS), where("userId", "==", userId))
-  );
+  const snapshots = await getDocs(collection(firestore, COLLECTIONS.LIST_ITEMS));
 
   return snapshots.docs
     .map((snapshot) => mapDoc(snapshot, toListItemRecord))
