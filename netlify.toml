@@ -4,6 +4,7 @@
 
 [build.environment]
   NODE_VERSION = "20"
+  SECRETS_SCAN_OMIT_PATHS = "dist"
 
 # Redirect all routes to index.html for React Router to handle
 [[redirects]]
