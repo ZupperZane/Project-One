@@ -4,7 +4,7 @@ import { ROUTES } from "../utils/constants";
 import "../Root.css";
 
 function Root() {
-  const { user, loading, firebaseConfigured, signOutUser } = useAuth();
+  const { user, loading, signOutUser } = useAuth();
 
   return (
     <main>
