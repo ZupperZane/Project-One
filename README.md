@@ -28,6 +28,8 @@ Role and account linking are configured on first login via an in-app setup promp
 
 ## Environment
 
+https://globochat.netlify.app/login
+
 Create a `.env` file in the project root:
 
 ```
