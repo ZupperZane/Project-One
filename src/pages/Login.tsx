@@ -12,7 +12,7 @@ function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const from = (location.state as { from?: string } | null)?.from ?? "/dashboard";
+  const from = (location.state as { from?: string } | null)?.from ?? "/home";
 
   const handleEmailLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
