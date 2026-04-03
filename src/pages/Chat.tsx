@@ -1,273 +1,293 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { FormEvent } from "react";
-import { ClearConversationMessages, DisplayMessages, SendMessage } from "../backend/chatHandler";
-import { ConnectUsers, EnsureUser, ListUsers, RelationFor } from "../backend/userHandler";
+import { DeleteMessage, DisplayMessages, SendMessage } from "../backend/chatHandler";
+import { EnsureUser } from "../backend/userHandler";
 import type { MessageRecord, UserRecord } from "../backend/storage";
 import useAuth from "../hooks/useAuth";
+import { useActiveProfile } from "../hooks/useActiveProfile";
+import { ROLES } from "../utils/constants";
+import type { UserProfile } from "../hooks/useUserProfile";
+
+function resolveDisplayName(profile: UserProfile | null): string {
+  if (!profile) return "your contact";
+  if (profile.displayName && profile.displayName !== "User") return profile.displayName;
+  return profile.role === ROLES.PRIMARY ? "Olivia" : "Emma";
+}
+
+const COLORS = {
+  bg: "#1a1a1a",
+  header: "#141414",
+  messageBg: "linear-gradient(160deg, #252525 0%, #2e1a08 100%)",
+  inputBar: "#1e1e1e",
+  inputField: "#2a2a2a",
+  ownBubble: "#35AADA",
+  otherBubble: "#E8B800",
+  ownText: "#ffffff",
+  otherText: "#1a1a1a",
+  subtext: "#888",
+  border: "#333",
+};
 
 function Chat() {
   const { user } = useAuth();
+  const { linkedProfile, ownProfile, activeUserId, isViewingLinked } = useActiveProfile();
   const [selfUser, setSelfUser] = useState<UserRecord | null>(null);
-  const [users, setUsers] = useState<UserRecord[]>([]);
-  const [activeTargetId, setActiveTargetId] = useState<string>("");
-  const [relation, setRelation] = useState<string>("unknown");
-  const [relationDraft, setRelationDraft] = useState<string>("");
-  const [savingRelation, setSavingRelation] = useState(false);
   const [messages, setMessages] = useState<MessageRecord[]>([]);
   const [body, setBody] = useState("");
-  const [notice, setNotice] = useState("");
-  const [clearing, setClearing] = useState(false);
   const [error, setError] = useState<string>("");
+  const bottomRef = useRef<HTMLDivElement>(null);
+
+  // Perspective flips with the toggle:
+  // Emma viewing self  → self=Emma,  target=Olivia
+  // Emma viewing Olivia → self=Olivia, target=Emma
+  const canDelete = ownProfile?.role === ROLES.SUPPORTIVE;
+  const selfId = activeUserId;
+  const targetId = isViewingLinked ? (ownProfile?.uid ?? null) : (linkedProfile?.uid ?? null);
+  const selfName = resolveDisplayName(isViewingLinked ? linkedProfile : ownProfile);
+  const targetName = resolveDisplayName(isViewingLinked ? ownProfile : linkedProfile);
 
   useEffect(() => {
     const setup = async () => {
-      if (!user) return;
-
-      const localUser = await EnsureUser({
-        externalId: user.uid,
-        email: user.email ?? undefined,
-        displayName: user.displayName ?? undefined,
-      });
-
-      const allUsers = await ListUsers();
-      const others = allUsers.filter((candidate) => candidate.id !== localUser.id);
-
+      if (!user || !selfId) return;
+      const localUser = await EnsureUser({ externalId: selfId });
       setSelfUser(localUser);
-      setUsers(others);
-      setActiveTargetId(others[0]?.id ?? "");
-      setMessages(await DisplayMessages(localUser.id));
+      setMessages(await DisplayMessages(selfId));
     };
-
     void setup();
-  }, [user]);
-
-  useEffect(() => {
-    const loadRelation = async () => {
-      if (!selfUser || !activeTargetId) {
-        setRelation("unknown");
-        return;
-      }
-
-      const value = await RelationFor(selfUser.id, activeTargetId);
-      setRelation(value ?? "unknown");
-    };
-
-    void loadRelation();
-  }, [activeTargetId, selfUser]);
-
-  useEffect(() => {
-    setRelationDraft(relation === "unknown" ? "" : relation);
-  }, [relation, activeTargetId]);
+  }, [user, selfId]);
 
   const visibleMessages = useMemo(() => {
-    if (!selfUser || !activeTargetId) return [];
-
+    if (!selfId || !targetId) return [];
     return messages.filter(
-      (message) =>
-        (message.fromUserId === selfUser.id && message.toUserId === activeTargetId) ||
-        (message.fromUserId === activeTargetId && message.toUserId === selfUser.id)
+      (m) =>
+        (m.fromUserId === selfId && m.toUserId === targetId) ||
+        (m.fromUserId === targetId && m.toUserId === selfId)
     );
-  }, [activeTargetId, messages, selfUser]);
+  }, [selfId, targetId, messages]);
 
-  const selectedTarget = users.find((target) => target.id === activeTargetId);
-  const resolveSenderName = (fromUserId: string) => {
-    if (selfUser && fromUserId === selfUser.id) return `${selfUser.displayName} (You)`;
-    const sender = users.find((candidate) => candidate.id === fromUserId);
-    return sender?.displayName ?? fromUserId;
+  useEffect(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [visibleMessages]);
+
+  const handleDelete = async (messageId: string) => {
+    try {
+      await DeleteMessage(messageId);
+      setMessages((prev) => prev.filter((m) => m.id !== messageId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not delete message.");
+    }
   };
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    if (!body.trim() || !selfUser || !targetId) return;
     setError("");
-    setNotice("");
-
-    if (!selfUser || !activeTargetId) {
-      setError("You need another connected user to send a message.");
-      return;
-    }
-
     try {
-      await SendMessage({
-        fromUserId: selfUser.id,
-        toUserId: activeTargetId,
-        body,
-      });
+      await SendMessage({ fromUserId: selfUser.id, toUserId: targetId, body });
       setBody("");
       setMessages(await DisplayMessages(selfUser.id));
     } catch (err) {
-      const message = err instanceof Error ? err.message : "Message send failed";
-      setError(message);
-    }
-  };
-
-  const handleClearConversation = async () => {
-    if (!selfUser || !selectedTarget) {
-      setError("Choose a person first.");
-      return;
-    }
-
-    const shouldClear = window.confirm(
-      `Clear all messages between you and ${selectedTarget.displayName}? This cannot be undone.`
-    );
-    if (!shouldClear) return;
-
-    try {
-      setClearing(true);
-      setError("");
-      setNotice("");
-      const removedCount = await ClearConversationMessages(selfUser.id, selectedTarget.id);
-      setMessages(await DisplayMessages(selfUser.id));
-      setNotice(
-        removedCount > 0
-          ? `Cleared ${removedCount} message${removedCount === 1 ? "" : "s"}.`
-          : "No messages were found to clear."
-      );
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not clear conversation.";
-      setError(message);
-    } finally {
-      setClearing(false);
-    }
-  };
-
-  const handleSaveRelation = async () => {
-    if (!selfUser || !selectedTarget) {
-      setError("Choose a person first.");
-      return;
-    }
-
-    const nextRelation = relationDraft.trim();
-    if (!nextRelation) {
-      setError("Please type a relation before saving.");
-      return;
-    }
-
-    try {
-      setSavingRelation(true);
-      setError("");
-      setNotice("");
-      await ConnectUsers({
-        userId: selfUser.id,
-        targetUserId: selectedTarget.id,
-        relationToTarget: nextRelation,
-      });
-      setRelation(nextRelation);
-      setNotice(`Relation saved: ${nextRelation}`);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Could not save relation.";
-      setError(message);
-    } finally {
-      setSavingRelation(false);
+      setError(err instanceof Error ? err.message : "Message send failed");
     }
   };
 
   return (
-    <section className="mx-auto max-w-4xl space-y-4">
-      <div className="rounded-xl bg-base-200 p-4">
-        <h2 className="text-3xl font-bold">Messages</h2>
-        <p className="mt-1 text-lg">Step 1: Choose who you want to talk to.</p>
-      </div>
+    <div style={{
+      display: "flex",
+      flexDirection: "column",
+      height: "calc(100vh - 220px)",
+      minHeight: "400px",
+      maxWidth: "640px",
+      margin: "0 auto",
+      borderRadius: "16px",
+      overflow: "hidden",
+      boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+      border: `1px solid ${COLORS.border}`,
+      background: COLORS.bg,
+    }}>
 
-      <div className="rounded-xl bg-base-100 p-4">
-        <label htmlFor="chat-target" className="mb-2 block text-lg font-semibold">
-          Person
-        </label>
-        <select
-          id="chat-target"
-          className="select select-bordered w-full text-lg"
-          value={activeTargetId}
-          onChange={(event) => setActiveTargetId(event.target.value)}
-        >
-          <option value="">Choose a person</option>
-          {users.map((target) => (
-            <option key={target.id} value={target.id}>
-              {target.displayName}
-            </option>
-          ))}
-        </select>
-        <p className="mt-2 text-base">
-          {selectedTarget ? `Now chatting with: ${selectedTarget.displayName}` : "No person selected yet."}
-        </p>
-        <p className="text-sm opacity-80">Relationship: {relation}</p>
-
-        <div className="mt-3">
-          <label htmlFor="relation-input" className="mb-2 block text-lg font-semibold">
-            Relation to this person
-          </label>
-          <div className="grid gap-2 sm:grid-cols-[1fr_auto]">
-            <input
-              id="relation-input"
-              type="text"
-              className="input input-bordered text-lg"
-              placeholder="Example: Daughter, Friend, Caregiver"
-              value={relationDraft}
-              onChange={(event) => setRelationDraft(event.target.value)}
-              disabled={!selectedTarget || savingRelation}
-            />
-            <button
-              type="button"
-              className="btn btn-secondary text-base"
-              onClick={() => void handleSaveRelation()}
-              disabled={!selectedTarget || !relationDraft.trim() || savingRelation}
-            >
-              {savingRelation ? "Saving..." : "Save Relation"}
-            </button>
+      {/* Header */}
+      <div style={{
+        background: COLORS.header,
+        borderBottom: `1px solid ${COLORS.border}`,
+        padding: "1rem 1.5rem",
+        display: "flex",
+        alignItems: "center",
+        gap: "0.75rem",
+        flexShrink: 0,
+      }}>
+        <div style={{
+          width: "42px",
+          height: "42px",
+          borderRadius: "50%",
+          background: COLORS.ownBubble,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontWeight: 700,
+          fontSize: "1.1rem",
+          color: "#fff",
+          flexShrink: 0,
+        }}>
+          {targetName[0]?.toUpperCase() ?? "?"}
+        </div>
+        <div>
+          <div style={{ fontWeight: 700, fontSize: "1.05rem", color: "#f0f0f0" }}>
+            {targetName}
+          </div>
+          <div style={{ fontSize: "0.75rem", color: COLORS.subtext }}>
+            {targetId ? "Messages saved automatically" : "No linked contact"}
           </div>
         </div>
       </div>
 
-      <div className="rounded-xl bg-base-100 p-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="text-2xl font-bold">Conversation</h3>
-          <button
-            type="button"
-            className="btn btn-outline"
-            onClick={() => void handleClearConversation()}
-            disabled={!selectedTarget || clearing}
-          >
-            {clearing ? "Clearing..." : "Clear Chat History"}
-          </button>
-        </div>
-        <ul className="mt-2 max-h-72 space-y-2 overflow-y-auto">
-          {visibleMessages.length === 0 ? <li className="text-lg">No messages yet.</li> : null}
-          {visibleMessages.map((message) => (
-            <li key={message.id} className="rounded-lg bg-base-200 p-3 text-left text-lg">
-              <p className="text-sm font-semibold opacity-80">
-                From: {resolveSenderName(message.fromUserId)}
-              </p>
-              <span className="mr-2 text-sm opacity-70">
-                {new Date(message.createdAt).toLocaleTimeString()}
-              </span>
-              {message.body}
-            </li>
-          ))}
-        </ul>
+      {/* Message list */}
+      <div style={{
+        flex: 1,
+        overflowY: "auto",
+        padding: "1.25rem 1rem",
+        display: "flex",
+        flexDirection: "column",
+        gap: "0.75rem",
+        background: COLORS.messageBg,
+      }}>
+        {!targetId && (
+          <p style={{ color: COLORS.subtext, textAlign: "center", marginTop: "2rem" }}>
+            No linked contact found.
+          </p>
+        )}
+
+        {visibleMessages.length === 0 && targetId && (
+          <p style={{ color: COLORS.subtext, textAlign: "center", marginTop: "2rem" }}>
+            No messages yet — say hello!
+          </p>
+        )}
+
+        {visibleMessages.map((message) => {
+          const isOwn = message.fromUserId === selfId;
+          return (
+            <div key={message.id} style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: isOwn ? "flex-end" : "flex-start",
+            }}>
+              <div style={{
+                fontSize: "0.7rem",
+                color: COLORS.subtext,
+                marginBottom: "0.25rem",
+                paddingLeft: "4px",
+                paddingRight: "4px",
+              }}>
+                {isOwn ? selfName : targetName}
+              </div>
+              <div style={{
+                background: isOwn ? COLORS.ownBubble : COLORS.otherBubble,
+                color: isOwn ? COLORS.ownText : COLORS.otherText,
+                padding: "0.6rem 1rem",
+                borderRadius: isOwn ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+                maxWidth: "70%",
+                lineHeight: 1.45,
+                wordBreak: "break-word",
+                fontSize: "0.95rem",
+              }}>
+                {message.body}
+              </div>
+              <div style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "0.4rem",
+                marginTop: "0.2rem",
+                paddingLeft: "4px",
+                paddingRight: "4px",
+              }}>
+                <span style={{ fontSize: "0.68rem", color: COLORS.subtext }}>
+                  {new Date(message.createdAt).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                </span>
+                {canDelete && (
+                  <button
+                    type="button"
+                    onClick={() => void handleDelete(message.id)}
+                    title="Delete message"
+                    style={{
+                      background: "none",
+                      border: "none",
+                      color: COLORS.subtext,
+                      cursor: "pointer",
+                      fontSize: "0.7rem",
+                      padding: "0 2px",
+                      lineHeight: 1,
+                      opacity: 0.6,
+                    }}
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+        <div ref={bottomRef} />
       </div>
 
-      <form onSubmit={handleSubmit} className="rounded-xl bg-base-100 p-4">
-        <label htmlFor="message-body" className="mb-2 block text-lg font-semibold">
-          Step 2: Type your message
-        </label>
-        <textarea
-          id="message-body"
-          className="textarea textarea-bordered h-28 w-full text-lg"
+      {/* Input bar */}
+      <form onSubmit={handleSubmit} style={{
+        display: "flex",
+        gap: "0.5rem",
+        padding: "0.75rem 1rem",
+        borderTop: `1px solid ${COLORS.border}`,
+        background: COLORS.inputBar,
+        flexShrink: 0,
+      }}>
+        <input
+          type="text"
           value={body}
-          onChange={(event) => setBody(event.target.value)}
-          placeholder="Type your message here"
-          rows={3}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder={targetId ? `Message ${targetName}…` : "No contact linked"}
+          disabled={!targetId}
+          style={{
+            flex: 1,
+            padding: "0.65rem 1.1rem",
+            borderRadius: "999px",
+            border: `1.5px solid ${COLORS.border}`,
+            background: COLORS.inputField,
+            color: "#f0f0f0",
+            fontSize: "0.95rem",
+            outline: "none",
+          }}
         />
         <button
           type="submit"
-          className="btn btn-primary mt-3 w-full text-xl"
-          disabled={!activeTargetId || !body.trim()}
+          disabled={!targetId || !body.trim()}
+          style={{
+            background: COLORS.ownBubble,
+            color: "#fff",
+            border: "none",
+            borderRadius: "999px",
+            padding: "0.65rem 1.3rem",
+            fontWeight: 600,
+            fontSize: "0.95rem",
+            cursor: targetId && body.trim() ? "pointer" : "not-allowed",
+            opacity: targetId && body.trim() ? 1 : 0.4,
+            transition: "opacity 0.15s",
+            flexShrink: 0,
+          }}
         >
-          Step 3: Send Message
+          Send
         </button>
       </form>
 
-      {notice ? <p className="text-success text-lg font-semibold">{notice}</p> : null}
-      {error ? <p className="text-error text-lg font-semibold">{error}</p> : null}
-    </section>
+      {error && (
+        <p style={{
+          color: "#ff6b6b",
+          padding: "0.25rem 1rem 0.5rem",
+          background: COLORS.inputBar,
+          margin: 0,
+          fontSize: "0.85rem",
+        }}>
+          {error}
+        </p>
+      )}
+    </div>
   );
 }
 

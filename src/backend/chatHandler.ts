@@ -75,6 +75,15 @@ export async function DisplayMessages(userId: string): Promise<MessageRecord[]> 
   return [...map.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
+export async function DeleteMessage(messageId: string): Promise<boolean> {
+  const firestore = requireDb();
+  const ref = doc(firestore, COLLECTIONS.MESSAGES, messageId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return false;
+  await deleteDoc(ref);
+  return true;
+}
+
 export async function ClearConversationMessages(
   userId: string,
   targetUserId: string

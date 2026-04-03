@@ -38,7 +38,7 @@ export function useUserProfile(): UseUserProfileReturn {
         const snap = await getDoc(ref);
 
         if (snap.exists()) {
-          setProfile(snap.data() as UserProfile);
+          setProfile({ ...(snap.data() as UserProfile), uid: user.uid });
         } else {
           // First-time login: create a minimal profile doc.
           // Role defaults to "primary" — Zane/admin should set the correct

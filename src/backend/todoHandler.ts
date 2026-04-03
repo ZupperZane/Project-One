@@ -1,12 +1,15 @@
 import {
   addDoc,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
   getDoc,
   getDocs,
+  query,
   serverTimestamp,
   updateDoc,
+  where,
 } from "firebase/firestore";
 import {
   COLLECTIONS,
@@ -54,6 +57,9 @@ const toListItemRecord = (
   text: typeof data.text === "string" ? data.text : "",
   day: normalizeDay(typeof data.day === "string" ? data.day : undefined),
   completed: typeof data.completed === "boolean" ? data.completed : false,
+  sharedWith: Array.isArray(data.sharedWith)
+    ? data.sharedWith.filter((s): s is string => typeof s === "string")
+    : [],
   createdAt: asString(data.createdAt, now()),
   updatedAt: asString(data.updatedAt, now()),
 });
@@ -77,6 +83,7 @@ export async function addToList(input: AddToListInput): Promise<ListItemRecord> 
     text,
     day: normalizeDay(input.day),
     completed: false,
+    sharedWith: [] as string[],
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
@@ -89,9 +96,19 @@ export async function addToList(input: AddToListInput): Promise<ListItemRecord> 
     text,
     day: normalizeDay(input.day),
     completed: false,
+    sharedWith: [],
     createdAt: timestamp,
     updatedAt: timestamp,
   };
+}
+
+export async function ShareTask(taskId: string, targetUserId: string): Promise<boolean> {
+  const firestore = requireDb();
+  const itemRef = doc(firestore, COLLECTIONS.LIST_ITEMS, taskId);
+  const snap = await getDoc(itemRef);
+  if (!snap.exists()) return false;
+  await updateDoc(itemRef, { sharedWith: arrayUnion(targetUserId), updatedAt: serverTimestamp() });
+  return true;
 }
 
 export async function deleteFromList(input: DeleteFromListInput): Promise<boolean> {
@@ -103,7 +120,7 @@ export async function deleteFromList(input: DeleteFromListInput): Promise<boolea
   const data = itemSnap.data() as Record<string, unknown>;
   const listName = normalizeListName(input.listName);
 
-  if (data.listName !== listName) {
+  if (data.userId !== input.userId || data.listName !== listName) {
     return false;
   }
 
@@ -121,8 +138,8 @@ export async function editfromList(
 
   const existing = itemSnap.data() as Record<string, unknown>;
   const listName = normalizeListName(input.listName);
-  if (existing.listName !== listName) {
-    throw new Error("List item was not found in this list.");
+  if (existing.userId !== input.userId || existing.listName !== listName) {
+    throw new Error("You do not have permission to edit this list item.");
   }
 
   const updates: Record<string, unknown> = { updatedAt: serverTimestamp() };
@@ -149,23 +166,31 @@ export async function editfromList(
 
 export async function DisplayList(
   day: string,
-  _userId: string,
+  userId: string,
   listName = "default"
 ): Promise<ListItemRecord[]> {
   const firestore = requireDb();
   const normalizedListName = normalizeListName(listName);
   const dayKey = normalizeDay(day);
+  const itemsRef = collection(firestore, COLLECTIONS.LIST_ITEMS);
 
-  const snapshots = await getDocs(collection(firestore, COLLECTIONS.LIST_ITEMS));
+  const [ownSnapshots, sharedSnapshots] = await Promise.all([
+    getDocs(query(itemsRef, where("userId", "==", userId))),
+    getDocs(query(itemsRef, where("sharedWith", "array-contains", userId))),
+  ]);
 
-  return snapshots.docs
-    .map((snapshot) => mapDoc(snapshot, toListItemRecord))
+  const map = new Map<string, ListItemRecord>();
+  for (const snapshot of [...ownSnapshots.docs, ...sharedSnapshots.docs]) {
+    map.set(snapshot.id, mapDoc(snapshot, toListItemRecord));
+  }
+
+  return [...map.values()]
     .filter((item) => item.listName === normalizedListName && item.day === dayKey)
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-export async function DisplayCalenderFromList(day: string): Promise<EventRecord[]> {
-  return DisplayCalendarEvents(day);
+export async function DisplayCalenderFromList(day: string, userId?: string): Promise<EventRecord[]> {
+  return DisplayCalendarEvents(day, userId);
 }
 
 export { DisplayCalenderFromList as DisplayCalender };

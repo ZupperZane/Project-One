@@ -8,15 +8,20 @@ import {
   addToList,
   deleteFromList,
   editfromList,
+  ShareTask,
 } from "../backend/todoHandler";
+import { ShareEvent } from "../backend/eventHandler";
 import { EnsureUser, ListUsers } from "../backend/userHandler";
 import type { EventRecord, ListItemRecord, UserRecord } from "../backend/storage";
 import useAuth from "../hooks/useAuth";
-import { ROUTES } from "../utils/constants";
+import { useActiveProfile } from "../hooks/useActiveProfile";
+import { ROLES, ROUTES } from "../utils/constants";
 
 
 function Tasks() {
   const { user } = useAuth();
+  const { activeUserId, linkedProfile, ownProfile, isViewingLinked } = useActiveProfile();
+  const shareTargetId = isViewingLinked ? (ownProfile?.uid ?? null) : (linkedProfile?.uid ?? null);
   const [selfUser, setSelfUser] = useState<UserRecord | null>(null);
   const [loadingData, setLoadingData] = useState(true);
   const [busyItemId, setBusyItemId] = useState<string | null>(null);
@@ -34,7 +39,7 @@ function Tasks() {
   const refresh = async (userId: string, selectedDay: string) => {
     const [listItems, calEvents] = await Promise.all([
       DisplayList(selectedDay, userId),
-      DisplayCalender(selectedDay),
+      DisplayCalender(selectedDay, userId),
     ]);
 
     setItems(listItems);
@@ -211,7 +216,7 @@ function Tasks() {
         setUserNames(nextUserNames);
         setAvailableUsers(recipients);
         setRecipientUserId((previous) => previous || recipients[0]?.id || "");
-        await refresh(localUser.id, day);
+        await refresh(activeUserId ?? localUser.id, day);
       } catch (err) {
         const message = err instanceof Error ? err.message : "Could not load tasks.";
         setError(message);
@@ -224,10 +229,15 @@ function Tasks() {
   }, [day, user]);
 
   useEffect(() => {
+    if (!activeUserId) return;
+    void refresh(activeUserId, day);
+  }, [activeUserId]);
+
+  useEffect(() => {
     if (!selfUser) return;
 
     const refreshSharedTasks = () => {
-      void refresh(selfUser.id, day);
+      void refresh(activeUserId ?? selfUser.id, day);
     };
 
     const interval = window.setInterval(refreshSharedTasks, 5000);
@@ -237,7 +247,7 @@ function Tasks() {
       window.clearInterval(interval);
       window.removeEventListener("focus", refreshSharedTasks);
     };
-  }, [day, selfUser]);
+  }, [day, selfUser, activeUserId]);
 
   const handleAdd = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -249,16 +259,18 @@ function Tasks() {
       return;
     }
 
+    const effectiveUserId = activeUserId ?? selfUser.id;
+
     try {
       await addToList({
-        userId: selfUser.id,
+        userId: effectiveUserId,
         listName: "default",
         text: newItem,
         day,
       });
 
       setNewItem("");
-      await refresh(selfUser.id, day);
+      await refresh(effectiveUserId, day);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not add list item";
       setError(message);
@@ -268,18 +280,20 @@ function Tasks() {
   const toggleItem = async (item: ListItemRecord) => {
     if (!selfUser) return;
 
+    const effectiveUserId = activeUserId ?? selfUser.id;
+
     try {
       setBusyItemId(item.id);
       setError("");
       setNotice("");
       await editfromList({
-        userId: selfUser.id,
+        userId: item.userId,
         listName: "default",
         itemId: item.id,
         completed: !item.completed,
       });
 
-      await refresh(selfUser.id, day);
+      await refresh(effectiveUserId, day);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not update task.";
       setError(message);
@@ -291,22 +305,46 @@ function Tasks() {
   const removeItem = async (item: ListItemRecord) => {
     if (!selfUser) return;
 
+    const effectiveUserId = activeUserId ?? selfUser.id;
+
     try {
       setBusyItemId(item.id);
       setError("");
       setNotice("");
       await deleteFromList({
-        userId: selfUser.id,
+        userId: item.userId,
         listName: "default",
         itemId: item.id,
       });
 
-      await refresh(selfUser.id, day);
+      await refresh(effectiveUserId, day);
     } catch (err) {
       const message = err instanceof Error ? err.message : "Could not delete task.";
       setError(message);
     } finally {
       setBusyItemId(null);
+    }
+  };
+
+  const shareTask = async (item: ListItemRecord) => {
+    if (!shareTargetId) return;
+    try {
+      setError("");
+      await ShareTask(item.id, shareTargetId);
+      await refresh(activeUserId ?? selfUser?.id ?? "", day);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not share task.");
+    }
+  };
+
+  const shareEvent = async (event: EventRecord) => {
+    if (!shareTargetId) return;
+    try {
+      setError("");
+      await ShareEvent(event.id, shareTargetId);
+      await refresh(activeUserId ?? selfUser?.id ?? "", day);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not share event.");
     }
   };
 
@@ -335,7 +373,7 @@ function Tasks() {
     <section className="mx-auto max-w-5xl space-y-4">
       <div className="rounded-xl bg-base-200 p-4">
         <h2 className="text-3xl font-bold">Tasks</h2>
-        <p className="mt-1 text-lg">Shared checklist: all users can view and update tasks for this day.</p>
+        <p className="mt-1 text-lg">Your tasks are private. Use the Share button to share individual items.</p>
       </div>
 
       <div className="rounded-xl bg-base-100 p-4">
@@ -390,17 +428,29 @@ function Tasks() {
                 </label>
                 <p className="mt-1 text-sm opacity-80">Added by: {resolvePosterName(item.userId)}</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                {user?.uid !== "hkj5avXj30WV9ixoD9vLr7dvlo63" && (
+                  {shareTargetId && !item.sharedWith.includes(shareTargetId) && (
+                    <button
+                      type="button"
+                      className="btn btn-accent btn-sm"
+                      onClick={() => void shareTask(item)}
+                      disabled={busyItemId === item.id}
+                    >
+                      Share
+                    </button>
+                  )}
+                  {shareTargetId && item.sharedWith.includes(shareTargetId) && (
+                    <span className="btn btn-sm btn-disabled">Shared ✓</span>
+                  )}
+                  {ownProfile?.role === ROLES.SUPPORTIVE && (
                     <button
                       type="button"
                       onClick={() => void removeItem(item)}
                       className="btn btn-error btn-sm"
                       disabled={busyItemId === item.id}
                     >
-                    Delete
+                      Delete
                     </button>
                   )}
-              
                 </div>
               </li>
             ))}
@@ -415,6 +465,20 @@ function Tasks() {
               <li key={event.id} className="rounded-lg bg-base-200 p-3 text-lg">
                 <p className="font-semibold">{event.name}</p>
                 <p className="text-sm opacity-80">Added by: {resolvePosterName(event.createdBy)}</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {shareTargetId && !event.sharedWith.includes(shareTargetId) && (
+                    <button
+                      type="button"
+                      className="btn btn-accent btn-sm"
+                      onClick={() => void shareEvent(event)}
+                    >
+                      Share
+                    </button>
+                  )}
+                  {shareTargetId && event.sharedWith.includes(shareTargetId) && (
+                    <span className="btn btn-sm btn-disabled">Shared ✓</span>
+                  )}
+                </div>
               </li>
             ))}
           </ul>

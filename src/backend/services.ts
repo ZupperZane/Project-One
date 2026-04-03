@@ -12,6 +12,7 @@ export {
   EditEvent,
   DisplayCalender,
   ListEvents,
+  ShareEvent,
 } from "./eventHandler";
 
 export { SendMessage, DisplayMessages } from "./chatHandler";
@@ -22,6 +23,7 @@ export {
   editfromList,
   DisplayList,
   DisplayCalender as DisplayCalenderFromList,
+  ShareTask,
 } from "./todoHandler";
 
 export { addSavedSite, deleteSavedSite, DisplaySavedSites } from "./savedSitesHandler";

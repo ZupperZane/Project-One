@@ -1,5 +1,6 @@
 import {
   addDoc,
+  arrayUnion,
   collection,
   deleteDoc,
   doc,
@@ -43,6 +44,9 @@ const toEventRecord = (data: Record<string, unknown>, id: string): EventRecord =
   startAt: typeof data.startAt === "string" ? data.startAt : null,
   notes: typeof data.notes === "string" ? data.notes : "",
   createdBy: typeof data.createdBy === "string" ? data.createdBy : "system",
+  sharedWith: Array.isArray(data.sharedWith)
+    ? data.sharedWith.filter((s): s is string => typeof s === "string")
+    : [],
   createdAt: asString(data.createdAt, now()),
   updatedAt: asString(data.updatedAt, now()),
 });
@@ -99,6 +103,7 @@ export async function CreateEvent(input: CreateEventInput): Promise<EventRecord>
     startAt: input.startAt ?? null,
     notes: input.notes?.trim() ?? "",
     createdBy: input.createdBy?.trim() || "system",
+    sharedWith: [] as string[],
     createdAt: serverTimestamp(),
     updatedAt: serverTimestamp(),
   };
@@ -111,9 +116,19 @@ export async function CreateEvent(input: CreateEventInput): Promise<EventRecord>
     startAt: payload.startAt,
     notes: payload.notes,
     createdBy: payload.createdBy,
+    sharedWith: [],
     createdAt: timestamp,
     updatedAt: timestamp,
   };
+}
+
+export async function ShareEvent(eventId: string, targetUserId: string): Promise<boolean> {
+  const firestore = requireDb();
+  const eventRef = doc(firestore, COLLECTIONS.EVENTS, eventId);
+  const snap = await getDoc(eventRef);
+  if (!snap.exists()) return false;
+  await updateDoc(eventRef, { sharedWith: arrayUnion(targetUserId), updatedAt: serverTimestamp() });
+  return true;
 }
 
 export async function DeleteEvent(eventId: string): Promise<boolean> {
@@ -161,7 +176,7 @@ export async function EditEvent(
   return toEventRecord(next.data() as Record<string, unknown>, next.id);
 }
 
-export async function DisplayCalender(day?: string): Promise<EventRecord[]> {
+export async function DisplayCalender(day?: string, userId?: string): Promise<EventRecord[]> {
   await seedDummyEvents();
 
   const firestore = requireDb();
@@ -169,9 +184,18 @@ export async function DisplayCalender(day?: string): Promise<EventRecord[]> {
   const eventsRef = collection(firestore, COLLECTIONS.EVENTS);
   const snapshots = await getDocs(query(eventsRef, where("day", "==", dayKey)));
 
-  return snapshots.docs
-    .map((snapshot) => mapDoc(snapshot, toEventRecord))
-    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
+  const all = snapshots.docs.map((snapshot) => mapDoc(snapshot, toEventRecord));
+
+  const visible = userId
+    ? all.filter(
+        (e) =>
+          e.createdBy === userId ||
+          e.createdBy === "system" ||
+          e.sharedWith.includes(userId)
+      )
+    : all;
+
+  return visible.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
 export async function ListEvents(): Promise<EventRecord[]> {

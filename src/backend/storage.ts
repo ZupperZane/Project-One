@@ -16,6 +16,7 @@ export interface EventRecord {
   startAt: string | null;
   notes: string;
   createdBy: string;
+  sharedWith: string[];
   createdAt: string;
   updatedAt: string;
 }
@@ -35,6 +36,7 @@ export interface ListItemRecord {
   text: string;
   day: string;
   completed: boolean;
+  sharedWith: string[];
   createdAt: string;
   updatedAt: string;
 }

@@ -1,17 +1,19 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Weather from "../Components/Weather";
-import { ListEvents } from "../backend/eventHandler";
+import { DeleteEvent, ListEvents } from "../backend/eventHandler";
 import { ListUsers } from "../backend/userHandler";
 import type { EventRecord } from "../backend/storage";
-import { ROUTES } from "../utils/constants";
-import { useUserProfile } from "../hooks/useUserProfile";
+import { ROLES, ROUTES } from "../utils/constants";
+import { useActiveProfile } from "../hooks/useActiveProfile";
 
 function Home() {
   const [events, setEvents] = useState<EventRecord[]>([]);
   const [userNames, setUserNames] = useState<Record<string, string>>({});
   const [error, setError] = useState("");
-  const { profile, loading } = useUserProfile();
+  const { activeUserId, ownProfile, loading } = useActiveProfile();
+  const profile = ownProfile;
+  const canDelete = ownProfile?.role === ROLES.SUPPORTIVE;
   const actionCards = [
     {
       to: ROUTES.CHAT,
@@ -35,7 +37,7 @@ function Home() {
       to: ROUTES.SITES,
       title: "Saved Sites",
       hint: "Open favorite websites.",
-      btnClass: "btn-outline",
+      btnClass: "btn-warning",
     },
   ];
 
@@ -45,14 +47,31 @@ function Home() {
     return userNames[posterId] ?? posterId;
   };
 
+  const handleDelete = async (event: EventRecord) => {
+    try {
+      setError("");
+      await DeleteEvent(event.id);
+      setEvents((prev) => prev.filter((e) => e.id !== event.id));
+      window.dispatchEvent(new Event("events:changed"));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Unable to delete event.");
+    }
+  };
+
   useEffect(() => {
-    if (!profile) return;
+    if (!activeUserId) return;
 
     const loadEvents = async () => {
       try {
         setError("");
-        const existingEvents = await ListEvents();
-        setEvents(existingEvents.slice(0, 5));
+        const all = await ListEvents();
+        const visible = all.filter(
+          (e) =>
+            e.createdBy === activeUserId ||
+            e.createdBy === "system" ||
+            e.sharedWith.includes(activeUserId)
+        );
+        setEvents(visible.slice(0, 5));
       } catch (err) {
         const message = err instanceof Error ? err.message : "Unable to load events.";
         setError(message);
@@ -60,33 +79,24 @@ function Home() {
     };
 
     void loadEvents();
-
-    const onEventsChanged = () => {
-      void loadEvents();
-    };
-
-    window.addEventListener("events:changed", onEventsChanged);
-    return () => {
-      window.removeEventListener("events:changed", onEventsChanged);
-    };
-  }, [profile]);
+    window.addEventListener("events:changed", loadEvents);
+    return () => window.removeEventListener("events:changed", loadEvents);
+  }, [activeUserId]);
 
   useEffect(() => {
+    if (!activeUserId) return;
     const loadUsers = async () => {
       try {
         const allUsers = await ListUsers();
-        const nextUserNames = Object.fromEntries(
+        setUserNames(Object.fromEntries(
           allUsers.map((entry) => [entry.id, entry.displayName || entry.email || entry.id])
-        );
-        setUserNames(nextUserNames);
+        ));
       } catch {
         setUserNames({});
       }
     };
-
-    if (!profile) return;
     void loadUsers();
-  }, [profile]);
+  }, [activeUserId]);
 
    if (loading) {
     return <div className="flex items-center justify-center h-full">Loading...</div>;
@@ -135,11 +145,22 @@ function Home() {
         <div className="rounded-xl bg-base-200 p-4">
           <h3 className="mb-2 text-2xl font-bold">Recent Events</h3>
           {events.length === 0 ? <p className="text-lg">No recent events yet.</p> : null}
-          <ul className="list-disc space-y-1 pl-6 text-lg">
+          <ul className="space-y-2 text-lg">
             {events.map((event) => (
-              <li key={event.id}>
-                <span className="font-semibold">{event.name}</span>
-                <span className="block text-sm opacity-80">Added by: {resolvePosterName(event.createdBy)}</span>
+              <li key={event.id} className="flex items-start justify-between gap-2">
+                <div>
+                  <span className="font-semibold">{event.name}</span>
+                  <span className="block text-sm opacity-80">Added by: {resolvePosterName(event.createdBy)}</span>
+                </div>
+                {canDelete && (
+                  <button
+                    type="button"
+                    className="btn btn-error btn-xs shrink-0"
+                    onClick={() => void handleDelete(event)}
+                  >
+                    Delete
+                  </button>
+                )}
               </li>
             ))}
           </ul>

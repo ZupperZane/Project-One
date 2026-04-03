@@ -1,10 +1,18 @@
 import { NavLink, Outlet } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
-import { ROUTES } from "../utils/constants";
+import { useActiveProfile } from "../hooks/useActiveProfile";
+import { ROUTES, ROLES } from "../utils/constants";
 import "../Root.css";
+
+function resolveDisplayName(name: string | undefined, role: string | undefined) {
+  if (name && name !== "User") return name;
+  return role === ROLES.PRIMARY ? "Olivia" : "Emma";
+}
 
 function Root() {
   const { user, loading, firebaseConfigured, signOutUser } = useAuth();
+  const { canToggle, isViewingLinked, linkedProfile, toggle } = useActiveProfile();
+  const linkedName = resolveDisplayName(linkedProfile?.displayName, linkedProfile?.role);
   const navClass = (variant: string) =>
     ({ isActive }: { isActive: boolean }) =>
       `nav-btn ${variant}${isActive ? " nav-active" : ""}`;
@@ -52,6 +60,12 @@ function Root() {
               <span className="nav-title">Account</span>
               <span className="nav-hint">See sign-in details</span>
             </NavLink>
+            {canToggle && (
+              <button type="button" className="nav-btn nav-dashboard" onClick={toggle}>
+                <span className="nav-title">{isViewingLinked ? "Switch to Yourself" : `Switch to ${linkedName}`}</span>
+                <span className="nav-hint">{isViewingLinked ? "Back to your account" : `Manage ${linkedName}'s account`}</span>
+              </button>
+            )}
             <button type="button" className="nav-btn nav-logout" onClick={() => void signOutUser()}>
               <span className="nav-title">Log Out</span>
               <span className="nav-hint">Return to guest mode</span>
@@ -74,6 +88,12 @@ function Root() {
           </>
         )}
       </nav>
+
+      {isViewingLinked && (
+        <p style={{ background: "#fff3cd", border: "1px solid #ffc107", color: "#333", padding: "0.5rem 1rem", marginBottom: "1rem" }}>
+          Managing {linkedName}&apos;s account — your changes affect their data.
+        </p>
+      )}
 
       <div className="root-content">
         <Outlet />
