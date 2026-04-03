@@ -35,7 +35,7 @@ const toMessageRecord = (
   createdAt: asString(data.createdAt, now()),
 });
 
-export async function SendMessage(input: SendMessageInput): Promise<MessageRecord> {
+export async function sendMessage(input: SendMessageInput): Promise<MessageRecord> {
   const body = input.body.trim();
   if (!body) throw new Error("Message body is required.");
 
@@ -57,7 +57,7 @@ export async function SendMessage(input: SendMessageInput): Promise<MessageRecor
   return { id: ref.id, fromUserId: input.fromUserId, toUserId: input.toUserId, body, createdAt: now() };
 }
 
-export async function DisplayMessages(userId: string): Promise<MessageRecord[]> {
+export async function displayMessages(userId: string): Promise<MessageRecord[]> {
   const firestore = requireDb();
   const messagesRef = collection(firestore, COLLECTIONS.MESSAGES);
 
@@ -75,7 +75,7 @@ export async function DisplayMessages(userId: string): Promise<MessageRecord[]> 
   return [...map.values()].sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-export async function DeleteMessage(messageId: string): Promise<boolean> {
+export async function deleteMessage(messageId: string): Promise<boolean> {
   const firestore = requireDb();
   const ref = doc(firestore, COLLECTIONS.MESSAGES, messageId);
   const snap = await getDoc(ref);
@@ -84,7 +84,7 @@ export async function DeleteMessage(messageId: string): Promise<boolean> {
   return true;
 }
 
-export async function ClearConversationMessages(
+export async function clearConversationMessages(
   userId: string,
   targetUserId: string
 ): Promise<number> {

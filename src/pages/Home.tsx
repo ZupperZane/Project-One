@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import Weather from "../Components/Weather";
-import { DeleteEvent, ListEvents } from "../backend/eventHandler";
-import { ListUsers } from "../backend/userHandler";
+import { deleteEvent, listEvents } from "../backend/eventHandler";
+import { listUsers } from "../backend/userHandler";
 import type { EventRecord } from "../backend/storage";
 import { ROLES, ROUTES } from "../utils/constants";
 import { useActiveProfile } from "../hooks/useActiveProfile";
@@ -50,7 +50,7 @@ function Home() {
   const handleDelete = async (event: EventRecord) => {
     try {
       setError("");
-      await DeleteEvent(event.id);
+      await deleteEvent(event.id);
       setEvents((prev) => prev.filter((e) => e.id !== event.id));
       window.dispatchEvent(new Event("events:changed"));
     } catch (err) {
@@ -64,7 +64,7 @@ function Home() {
     const loadEvents = async () => {
       try {
         setError("");
-        const all = await ListEvents();
+        const all = await listEvents();
         const visible = all.filter(
           (e) =>
             e.createdBy === activeUserId ||
@@ -87,7 +87,7 @@ function Home() {
     if (!activeUserId) return;
     const loadUsers = async () => {
       try {
-        const allUsers = await ListUsers();
+        const allUsers = await listUsers();
         setUserNames(Object.fromEntries(
           allUsers.map((entry) => [entry.id, entry.displayName || entry.email || entry.id])
         ));

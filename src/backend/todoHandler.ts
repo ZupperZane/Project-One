@@ -21,7 +21,7 @@ import {
   type EventRecord,
   type ListItemRecord,
 } from "./storage";
-import { DisplayCalender as DisplayCalendarEvents } from "./eventHandler";
+import { displayCalendar as displayCalendarEvents } from "./eventHandler";
 
 interface AddToListInput {
   userId: string;
@@ -102,7 +102,7 @@ export async function addToList(input: AddToListInput): Promise<ListItemRecord> 
   };
 }
 
-export async function ShareTask(taskId: string, targetUserId: string): Promise<boolean> {
+export async function shareTask(taskId: string, targetUserId: string): Promise<boolean> {
   const firestore = requireDb();
   const itemRef = doc(firestore, COLLECTIONS.LIST_ITEMS, taskId);
   const snap = await getDoc(itemRef);
@@ -128,7 +128,7 @@ export async function deleteFromList(input: DeleteFromListInput): Promise<boolea
   return true;
 }
 
-export async function editfromList(
+export async function editFromList(
   input: EditFromListInput
 ): Promise<ListItemRecord> {
   const firestore = requireDb();
@@ -164,7 +164,7 @@ export async function editfromList(
   return toListItemRecord(next.data() as Record<string, unknown>, next.id);
 }
 
-export async function DisplayList(
+export async function displayList(
   day: string,
   userId: string,
   listName = "default"
@@ -189,8 +189,8 @@ export async function DisplayList(
     .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-export async function DisplayCalenderFromList(day: string, userId?: string): Promise<EventRecord[]> {
-  return DisplayCalendarEvents(day, userId);
+export async function displayCalendarFromList(day: string, userId?: string): Promise<EventRecord[]> {
+  return displayCalendarEvents(day, userId);
 }
 
-export { DisplayCalenderFromList as DisplayCalender };
+export { displayCalendarFromList as displayCalendar };

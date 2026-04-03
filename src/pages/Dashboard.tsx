@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { UpdateUserDisplayName } from "../backend/userHandler";
+import { updateUserDisplayName } from "../backend/userHandler";
 import useAuth from "../hooks/useAuth";
 import { ROUTES } from "../utils/constants";
 
@@ -38,7 +38,7 @@ function Dashboard() {
     try {
       setSavingName(true);
       await updateUserProfile({ displayName: nextName });
-      await UpdateUserDisplayName({
+      await updateUserDisplayName({
         userId: user.uid,
         displayName: nextName,
         email: user.email ?? undefined,

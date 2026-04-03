@@ -91,7 +91,7 @@ const seedDummyEvents = async () => {
   seeded = true;
 };
 
-export async function CreateEvent(input: CreateEventInput): Promise<EventRecord> {
+export async function createEvent(input: CreateEventInput): Promise<EventRecord> {
   const name = input.name.trim();
   if (!name) throw new Error("Event name is required.");
 
@@ -122,7 +122,7 @@ export async function CreateEvent(input: CreateEventInput): Promise<EventRecord>
   };
 }
 
-export async function ShareEvent(eventId: string, targetUserId: string): Promise<boolean> {
+export async function shareEvent(eventId: string, targetUserId: string): Promise<boolean> {
   const firestore = requireDb();
   const eventRef = doc(firestore, COLLECTIONS.EVENTS, eventId);
   const snap = await getDoc(eventRef);
@@ -131,7 +131,7 @@ export async function ShareEvent(eventId: string, targetUserId: string): Promise
   return true;
 }
 
-export async function DeleteEvent(eventId: string): Promise<boolean> {
+export async function deleteEvent(eventId: string): Promise<boolean> {
   const firestore = requireDb();
   const eventRef = doc(firestore, COLLECTIONS.EVENTS, eventId);
   const existing = await getDoc(eventRef);
@@ -141,7 +141,7 @@ export async function DeleteEvent(eventId: string): Promise<boolean> {
   return true;
 }
 
-export async function EditEvent(
+export async function editEvent(
   eventId: string,
   changes: EditEventInput
 ): Promise<EventRecord> {
@@ -176,7 +176,7 @@ export async function EditEvent(
   return toEventRecord(next.data() as Record<string, unknown>, next.id);
 }
 
-export async function DisplayCalender(day?: string, userId?: string): Promise<EventRecord[]> {
+export async function displayCalendar(day?: string, userId?: string): Promise<EventRecord[]> {
   await seedDummyEvents();
 
   const firestore = requireDb();
@@ -198,7 +198,7 @@ export async function DisplayCalender(day?: string, userId?: string): Promise<Ev
   return visible.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-export async function ListEvents(): Promise<EventRecord[]> {
+export async function listEvents(): Promise<EventRecord[]> {
   await seedDummyEvents();
 
   const firestore = requireDb();

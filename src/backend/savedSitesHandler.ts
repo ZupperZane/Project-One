@@ -86,7 +86,7 @@ export async function deleteSavedSite(
   return true;
 }
 
-export async function DisplaySavedSites(userId: string): Promise<SavedSiteRecord[]> {
+export async function displaySavedSites(userId: string): Promise<SavedSiteRecord[]> {
   const firestore = requireDb();
   const snapshots = await getDocs(
     query(collection(firestore, COLLECTIONS.SAVED_SITES), where("userId", "==", userId))

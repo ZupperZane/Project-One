@@ -1,12 +1,11 @@
 
 import { useCallback, useEffect, useState } from "react";
-import type { FormEvent } from "react";
 import {
   addSavedSite,
   deleteSavedSite,
-  DisplaySavedSites,
+  displaySavedSites,
 } from "../backend/savedSitesHandler";
-import { EnsureUser, ListUsers } from "../backend/userHandler";
+import { ensureUser, listUsers } from "../backend/userHandler";
 import type { SavedSiteRecord, UserRecord } from "../backend/storage";
 import useAuth from "../hooks/useAuth";
 
@@ -25,7 +24,7 @@ function SavedSites() {
   };
 
   const refresh = async (userId: string) => {
-    setSites(await DisplaySavedSites(userId));
+    setSites(await displaySavedSites(userId));
   };
 
   const resolveCurrentBackendUser = useCallback(async () => {
@@ -33,7 +32,7 @@ function SavedSites() {
       throw new Error("You must be signed in to manage saved sites.");
     }
 
-    const localUser = await EnsureUser({
+    const localUser = await ensureUser({
       externalId: user.uid,
       email: user.email ?? undefined,
       displayName: user.displayName ?? undefined,
@@ -56,7 +55,7 @@ function SavedSites() {
         setError("");
         const localUser = await resolveCurrentBackendUser();
         await refresh(localUser.id);
-        const allUsers = await ListUsers();
+        const allUsers = await listUsers();
         const nextUserNames = Object.fromEntries(
           allUsers.map((entry) => [entry.id, entry.displayName || entry.email || entry.id])
         );
@@ -71,8 +70,7 @@ function SavedSites() {
     void setup();
   }, [loading, resolveCurrentBackendUser, user]);
 
-  const handleAdd = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleAdd = async () => {
     setError("");
 
     try {
@@ -106,7 +104,7 @@ function SavedSites() {
         <p className="mt-1 text-lg">Save important websites so they are easy to open later.</p>
       </div>
 
-      <form onSubmit={handleAdd} className="rounded-xl bg-base-100 p-4">
+      <form onSubmit={(e) => { e.preventDefault(); void handleAdd(); }} className="rounded-xl bg-base-100 p-4">
         <label htmlFor="site-title" className="mb-2 block text-lg font-semibold">
           Website name
         </label>

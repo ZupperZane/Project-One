@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { FormEvent } from "react";
-import { DeleteMessage, DisplayMessages, SendMessage } from "../backend/chatHandler";
-import { EnsureUser } from "../backend/userHandler";
+import { deleteMessage, displayMessages, sendMessage } from "../backend/chatHandler";
+import { ensureUser } from "../backend/userHandler";
 import type { MessageRecord, UserRecord } from "../backend/storage";
 import useAuth from "../hooks/useAuth";
 import { useActiveProfile } from "../hooks/useActiveProfile";
@@ -49,9 +48,9 @@ function Chat() {
   useEffect(() => {
     const setup = async () => {
       if (!user || !selfId) return;
-      const localUser = await EnsureUser({ externalId: selfId });
+      const localUser = await ensureUser({ externalId: selfId });
       setSelfUser(localUser);
-      setMessages(await DisplayMessages(selfId));
+      setMessages(await displayMessages(selfId));
     };
     void setup();
   }, [user, selfId]);
@@ -71,21 +70,20 @@ function Chat() {
 
   const handleDelete = async (messageId: string) => {
     try {
-      await DeleteMessage(messageId);
+      await deleteMessage(messageId);
       setMessages((prev) => prev.filter((m) => m.id !== messageId));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not delete message.");
     }
   };
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async () => {
     if (!body.trim() || !selfUser || !targetId) return;
     setError("");
     try {
-      await SendMessage({ fromUserId: selfUser.id, toUserId: targetId, body });
+      await sendMessage({ fromUserId: selfUser.id, toUserId: targetId, body });
       setBody("");
-      setMessages(await DisplayMessages(selfUser.id));
+      setMessages(await displayMessages(selfUser.id));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Message send failed");
     }
@@ -230,7 +228,7 @@ function Chat() {
       </div>
 
       {/* Input bar */}
-      <form onSubmit={handleSubmit} style={{
+      <form onSubmit={(e) => { e.preventDefault(); void handleSubmit(); }} style={{
         display: "flex",
         gap: "0.5rem",
         padding: "0.75rem 1rem",

@@ -7,33 +7,33 @@ export type {
 } from "./storage";
 
 export {
-  CreateEvent,
-  DeleteEvent,
-  EditEvent,
-  DisplayCalender,
-  ListEvents,
-  ShareEvent,
+  createEvent,
+  deleteEvent,
+  editEvent,
+  displayCalendar,
+  listEvents,
+  shareEvent,
 } from "./eventHandler";
 
-export { SendMessage, DisplayMessages } from "./chatHandler";
+export { sendMessage, displayMessages } from "./chatHandler";
 
 export {
   addToList,
   deleteFromList,
-  editfromList,
-  DisplayList,
-  DisplayCalender as DisplayCalenderFromList,
-  ShareTask,
+  editFromList,
+  displayList,
+  displayCalendar as displayCalendarFromList,
+  shareTask,
 } from "./todoHandler";
 
-export { addSavedSite, deleteSavedSite, DisplaySavedSites } from "./savedSitesHandler";
+export { addSavedSite, deleteSavedSite, displaySavedSites } from "./savedSitesHandler";
 
 export {
-  Signup,
-  Login,
-  ConnectUsers,
-  EnsureUser,
-  ListUsers,
-  GetCurrentUser,
-  RelationFor,
+  signup,
+  login,
+  connectUsers,
+  ensureUser,
+  listUsers,
+  getCurrentUser,
+  relationFor,
 } from "./userHandler";

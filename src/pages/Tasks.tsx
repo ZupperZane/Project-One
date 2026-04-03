@@ -1,17 +1,16 @@
 import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import {
-  DisplayList,
-  DisplayCalender,
+  displayList,
+  displayCalendar,
   addToList,
   deleteFromList,
-  editfromList,
-  ShareTask,
+  editFromList,
+  shareTask,
 } from "../backend/todoHandler";
-import { ShareEvent } from "../backend/eventHandler";
-import { EnsureUser, ListUsers } from "../backend/userHandler";
+import { shareEvent } from "../backend/eventHandler";
+import { ensureUser, listUsers } from "../backend/userHandler";
 import type { EventRecord, ListItemRecord, UserRecord } from "../backend/storage";
 import useAuth from "../hooks/useAuth";
 import { useActiveProfile } from "../hooks/useActiveProfile";
@@ -38,8 +37,8 @@ function Tasks() {
 
   const refresh = async (userId: string, selectedDay: string) => {
     const [listItems, calEvents] = await Promise.all([
-      DisplayList(selectedDay, userId),
-      DisplayCalender(selectedDay, userId),
+      displayList(selectedDay, userId),
+      displayCalendar(selectedDay, userId),
     ]);
 
     setItems(listItems);
@@ -198,13 +197,13 @@ function Tasks() {
         setLoadingData(true);
         setError("");
         setNotice("");
-        const localUser = await EnsureUser({
+        const localUser = await ensureUser({
           externalId: user.uid,
           email: user.email ?? undefined,
           displayName: user.displayName ?? undefined,
         });
 
-        const allUsers = await ListUsers();
+        const allUsers = await listUsers();
         const nextUserNames = Object.fromEntries(
           allUsers.map((entry) => [entry.id, entry.displayName || entry.email || entry.id])
         );
@@ -249,8 +248,7 @@ function Tasks() {
     };
   }, [day, selfUser, activeUserId]);
 
-  const handleAdd = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleAdd = async () => {
     setError("");
     setNotice("");
 
@@ -286,7 +284,7 @@ function Tasks() {
       setBusyItemId(item.id);
       setError("");
       setNotice("");
-      await editfromList({
+      await editFromList({
         userId: item.userId,
         listName: "default",
         itemId: item.id,
@@ -326,22 +324,22 @@ function Tasks() {
     }
   };
 
-  const shareTask = async (item: ListItemRecord) => {
+  const handleShareTask = async (item: ListItemRecord) => {
     if (!shareTargetId) return;
     try {
       setError("");
-      await ShareTask(item.id, shareTargetId);
+      await shareTask(item.id, shareTargetId);
       await refresh(activeUserId ?? selfUser?.id ?? "", day);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not share task.");
     }
   };
 
-  const shareEvent = async (event: EventRecord) => {
+  const handleShareEvent = async (event: EventRecord) => {
     if (!shareTargetId) return;
     try {
       setError("");
-      await ShareEvent(event.id, shareTargetId);
+      await shareEvent(event.id, shareTargetId);
       await refresh(activeUserId ?? selfUser?.id ?? "", day);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not share event.");
@@ -389,7 +387,7 @@ function Tasks() {
         />
       </div>
 
-      <form onSubmit={handleAdd} className="rounded-xl bg-base-100 p-4">
+      <form onSubmit={(e) => { e.preventDefault(); void handleAdd(); }} className="rounded-xl bg-base-100 p-4">
         <label htmlFor="new-task" className="mb-2 block text-lg font-semibold">
           New task
         </label>
@@ -432,7 +430,7 @@ function Tasks() {
                     <button
                       type="button"
                       className="btn btn-accent btn-sm"
-                      onClick={() => void shareTask(item)}
+                      onClick={() => void handleShareTask(item)}
                       disabled={busyItemId === item.id}
                     >
                       Share
@@ -470,7 +468,7 @@ function Tasks() {
                     <button
                       type="button"
                       className="btn btn-accent btn-sm"
-                      onClick={() => void shareEvent(event)}
+                      onClick={() => void handleShareEvent(event)}
                     >
                       Share
                     </button>

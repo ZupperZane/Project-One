@@ -1,13 +1,12 @@
 import { useEffect, useState } from "react";
-import type { FormEvent } from "react";
 import {
-  CreateEvent,
-  DeleteEvent,
-  DisplayCalender,
-  EditEvent,
-  ShareEvent,
+  createEvent,
+  deleteEvent,
+  displayCalendar,
+  editEvent,
+  shareEvent,
 } from "../backend/eventHandler";
-import { DisplayList, deleteFromList } from "../backend/todoHandler";
+import { displayList, deleteFromList } from "../backend/todoHandler";
 import type { EventRecord, ListItemRecord } from "../backend/storage";
 import useAuth from "../hooks/useAuth";
 import { useActiveProfile } from "../hooks/useActiveProfile";
@@ -68,8 +67,8 @@ function Calendar() {
       Array.from({ length: 7 }, (_, i) => addDays(start, i)).map(async (d) => {
         const dateStr = toDateStr(d);
         const [events, tasks] = await Promise.all([
-          DisplayCalender(dateStr, userId),
-          DisplayList(dateStr, userId),
+          displayCalendar(dateStr, userId),
+          displayList(dateStr, userId),
         ]);
         return { dateStr, events, tasks };
       })
@@ -87,11 +86,10 @@ function Calendar() {
 
   const weekLabel = `${days[0].toLocaleDateString([], { month: "short", day: "numeric" })} – ${days[6].toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}`;
 
-  const create = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const create = async () => {
     try {
       setError("");
-      await CreateEvent({
+      await createEvent({
         name,
         day: selectedDay,
         startAt: startAt || null,
@@ -113,7 +111,7 @@ function Calendar() {
     if (!nextName) return;
     try {
       setError("");
-      await EditEvent(entry.id, { name: nextName });
+      await editEvent(entry.id, { name: nextName });
       if (activeUserId) await fetchWeek(weekStart, activeUserId);
       window.dispatchEvent(new Event("events:changed"));
     } catch (err) {
@@ -124,7 +122,7 @@ function Calendar() {
   const remove = async (entry: EventRecord) => {
     try {
       setError("");
-      await DeleteEvent(entry.id);
+      await deleteEvent(entry.id);
       if (activeUserId) await fetchWeek(weekStart, activeUserId);
       window.dispatchEvent(new Event("events:changed"));
     } catch (err) {
@@ -136,7 +134,7 @@ function Calendar() {
     if (!shareTargetId) return;
     try {
       setError("");
-      await ShareEvent(entry.id, shareTargetId);
+      await shareEvent(entry.id, shareTargetId);
       if (activeUserId) await fetchWeek(weekStart, activeUserId);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Unable to share event.");
@@ -233,7 +231,7 @@ function Calendar() {
       {/* Add event form for selected day */}
       <div className="rounded-xl bg-base-100 p-4">
         <h3 className="mb-3 text-xl font-bold">Add Event on {selectedDay}</h3>
-        <form onSubmit={create} className="space-y-3">
+        <form onSubmit={(e) => { e.preventDefault(); void create(); }} className="space-y-3">
           <input
             className="input input-bordered w-full text-lg"
             type="text"
